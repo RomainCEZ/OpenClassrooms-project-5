@@ -49,15 +49,24 @@ function localStorageKeys() {
 setCartItems();
 setTotals();
 
+if (document.getElementsByClassName("deleteItem") && (localStorage)){
+    const deleteItemButton = document.getElementsByClassName("deleteItem");
+    const article = document.getElementsByClassName("cart__item");
+    const cart = document.getElementById("cart__items");
 
-
-//clear localStorage on click if cart is not empty
-if (document.getElementsByClassName("deleteItem").length > 0) {
-    document
-        .getElementsByClassName("deleteItem")[0]
+    //add event listener to every delete buttons
+    for (let i = 0; i < localStorage.length; i++) {
+        console.log(deleteItemButton[i]); // return p.deleteItem
+        console.log(article[i]); // article.cart__item
+        console.log(localStorage); 
+    
+    deleteItemButton[i]
         .addEventListener("click", function deleteItem(e) {
             e.preventDefault();
-            localStorage.clear();
+            //remove product from cart and localstorage
+            cart.removeChild(article[i]);
+            const key = localStorage.key(i)
+            localStorage.removeItem(key);
         });
-
     }
+}
