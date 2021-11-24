@@ -82,25 +82,45 @@ function saveColor() {
 
 //add productQty to product object
 function saveQty() {
-    let qty = document.getElementById("quantity").value;
+    let qty = Number(document.getElementById("quantity").value);
     product.qty = qty;
-    console.log(product.qty);
+    console.log("qty="+product.qty);
 }
 
-//save product to localStorage
+//generate a unique newKey from existing localstorage keys
+function generateKey() {
+    let newKey = 0;
+    //if localstorage exists, newKey is the sum of all keys + 1 so we can't overwrite an existing key
+    if (localStorage) {
+        const keys = Object.keys(localStorage);
+        for (let key of keys) {
+            newKey += Number(key) + 1;
+        }
+    }
+    //newKey is 0 if localstorage is empty
+    console.log(newKey);
+    return newKey;
+}
+
+//attribute a newKey to product and save it to localStorage
 function saveProducts() {
-    localStorage.setItem("product", JSON.stringify(product));
-    console.table(product);
+    const newKey = generateKey();
+    localStorage.setItem(newKey, JSON.stringify(product));
+    console.log(newKey);
 }
 
-//save product to localStorage
+//save product to localStorage and redirect to cart page
 document
     .getElementById("addToCart")
     .addEventListener("click", function saveProduct(e) {
         e.preventDefault();
         saveColor();
         saveQty();
+        generateKey();
         saveProducts();
+        
+        //redirect to url
+        window.location= "./cart.html";
     });
 
 
