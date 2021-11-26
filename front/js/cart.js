@@ -2,8 +2,6 @@
 let totalPrice = 0;
 let totalQty = 0;
 const keys = localStorageKeys();
-
-
 function setCartItem(product) {
     document.getElementById("cart__items").innerHTML += `<article class="cart__item" data-id="${product._id}"><div class="cart__item__img"><img src="${product.imageUrl}" alt="${product.altTxt}"></div><div class="cart__item__content"><div class="cart__item__content__titlePrice"><h2>${product.name} ( ${product.color} )</h2><p>${product.price} €</p></div><div class="cart__item__content__settings"><div class="cart__item__content__settings__quantity"><p>Qté : </p><input type="number" class="itemQuantity" name="itemQuantity" min="1" max="100" value="${product.qty}"></div><div class="cart__item__content__settings__delete"><p class="deleteItem">Supprimer</p></div></div></div></article>`;
 }
@@ -23,6 +21,7 @@ function calculateTotalPrice(qty, price) {
     totalPrice += price * qty;
 }
 
+//display total qty and total price
 function setTotals() {
     document.getElementById("totalQuantity").innerHTML = totalQty;
     document.getElementById("totalPrice").innerHTML = totalPrice;
@@ -34,6 +33,19 @@ function localStorageKeys() {
     return keys;
 }
 
+function getIdFromUrl() {
+    orderId = new URLSearchParams(document.location.search.substring(1)).get("orderId");
+    console.log(`Id : ${orderId}`);
+}
+
+function setOrderId() {
+    getIdFromUrl();
+    document.getElementById("orderId").innerHTML = orderId;
+}
+
+
+//if cart page
+if (document.getElementById("cart__items")) {
 setCartItems(keys);
 setTotals();
 
@@ -76,3 +88,45 @@ for (let i = 0; i < localStorage.length; i++) {
         setTotals();
     });
 }
+
+
+let contact = {
+    firstName: "romain",
+    lastName: "cezerac",
+    address: "ici",
+    city: "la",
+    email: "hercez92@hotmail.fr"
+}
+let products = ["107fb5b75607497b96722bda5b504926"];
+let order = {contact, products};
+let orderId;
+console.log(contact);
+console.log(products);
+console.log(order);
+
+document.getElementById("order").addEventListener('click', async function postOrder(e) {
+e.preventDefault();
+//send order 
+let response = await fetch("http://localhost:3000/api/products/order", {
+	method: "POST",
+    headers: { 
+        'Accept': 'application/json', 
+        'Content-Type': 'application/json' 
+        },        
+	body: JSON.stringify(order)
+    });
+orderResponse = await response.json();
+orderId = orderResponse.orderId;
+console.log("Order Id : "+orderId);
+window.location= "./confirmation.html?orderId="+orderId;
+});
+}
+
+
+//if confirmation page
+if (document.getElementById("orderId")) {
+    setOrderId();
+}
+
+//email   /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/g
+//names   /[^0-9\.\,\"\?\!\;\:\#\$\%\&\(\)\*\+\-\/\<\>\=\@\[\]\\\^\_\{\}\|\~]+/
