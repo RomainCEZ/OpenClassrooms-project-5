@@ -15,56 +15,48 @@ function getIdFromUrl() {
     console.log(`Id : ${productId}`);
 }
 
-//fetch product from api using productId and return product
+//fetch product from api using productId
 async function fetchProduct() {
     const res = await fetch("http://localhost:3000/api/products/"+productId);
     product = await res.json();
     console.table(product);
 }
 
-//get productImage and altTxt from product and add them to "item__img"
+//add imageUrl and altTxt
 function addProductImg() {
-    const imageUrl = product.imageUrl;
-    const altTxt = product.altTxt;
     document.getElementsByClassName("item__img")[0]
-        .innerHTML = `<img src="${imageUrl}" alt="${altTxt}">`;
-    console.log(`ImageUrl : ${imageUrl} Image altTxt : ${altTxt}`);
+        .innerHTML = `<img src="${product.imageUrl}" alt="${product.altTxt}">`;
+    console.log(`ImageUrl : ${product.imageUrl} Image altTxt : ${product.altTxt}`);
 }
 
-//get productName from product and add it to "title"
+//add name
 function addProductName() {
-    const name = product.name;
     document.getElementById("title")
-        .innerHTML = name;
-    console.log(`Name : ${name}`);
+        .innerHTML = product.name;
+    console.log(`Name : ${product.name}`);
 }
 
-//get productDescription from product and add it to "description"
+//add description
 function addProductDescription() {
-    const description = product.description;
     document.getElementById("description")
-        .innerHTML = description;
-    console.log(`Description : ${description}`);
+        .innerHTML = product.description;
+    console.log(`Description : ${product.description}`);
 }
 
-//get productPrice from product and add it to "price"
+//add price
 function addProductPrice() {
-    const price = product.price;
     document.getElementById("price")
-        .innerHTML = price;
-    console.log(`Price : ${price} €`);
+        .innerHTML = product.price;
+    console.log(`Price : ${product.price} €`);
 }
 
-//get productColors array from product and save it to colors variable
+//add each color to the "colors" list
 function addProductColors() {
-    const colors = product.colors;
-    console.table(colors);
-
-    //get each color from colors array and push productColor to the "colors" list
-    for (let i in colors) {
+    console.table(product.colors);
+    for (let i in product.colors) {
         document.getElementById("colors")
-            .innerHTML += `<option value="${colors[i]}">${colors[i]}</option>`;
-        console.log(`Color option ${i} : ${colors[i]}`);
+            .innerHTML += `<option value="${product.colors[i]}">${product.colors[i]}</option>`;
+        console.log(`Color option ${i} : ${product.colors[i]}`);
     }
 }
 
@@ -132,8 +124,7 @@ function checkDuplicateProduct(name, color) {
 }
 
 //save product to localStorage and redirect to cart page
-document
-    .getElementById("addToCart")
+document.getElementById("addToCart")
     .addEventListener("click", function saveProduct(e) {
         e.preventDefault();
         saveColor();
@@ -149,7 +140,7 @@ document
             const key = isDuplicate;
             const previousQty = JSON.parse(localStorage.getItem(key)).qty;
             let newQty = Number(document.getElementById("quantity").value);
-            console.log(`Previous quantity is : ${previousQty}`);
+            console.log(`Previous quantity was : ${previousQty}`);
             product.qty = previousQty + newQty;
             console.log(`New quantity is : ${product.qty}`);
             localStorage.setItem(key, JSON.stringify(product));
