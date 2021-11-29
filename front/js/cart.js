@@ -1,7 +1,7 @@
 
 let totalPrice = 0;
 let totalQty = 0;
-const keys = localStorageKeys();
+const keys = listLocalStorageKeys();
 function setCartItem(product) {
     document.getElementById("cart__items").innerHTML += `<article class="cart__item" data-id="${product._id}"><div class="cart__item__img"><img src="${product.imageUrl}" alt="${product.altTxt}"></div><div class="cart__item__content"><div class="cart__item__content__titlePrice"><h2>${product.name} ( ${product.color} )</h2><p>${product.price} €</p></div><div class="cart__item__content__settings"><div class="cart__item__content__settings__quantity"><p>Qté : </p><input type="number" class="itemQuantity" name="itemQuantity" min="1" max="100" value="${product.qty}"></div><div class="cart__item__content__settings__delete"><p class="deleteItem">Supprimer</p></div></div></div></article>`;
 }
@@ -27,9 +27,9 @@ function setTotals() {
     document.getElementById("totalPrice").innerHTML = totalPrice;
 }
 
-function localStorageKeys() {
+//list localstorage keys
+function listLocalStorageKeys() {
     const keys = Object.keys(localStorage);
-    console.log(keys);
     return keys;
 }
 
@@ -41,6 +41,17 @@ function getIdFromUrl() {
 function setOrderId() {
     getIdFromUrl();
     document.getElementById("orderId").innerHTML = orderId;
+}
+
+//create list of product id
+function createIdList() {
+    let idList = [];
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        let product = JSON.parse(localStorage.getItem(key));
+        idList.push(product._id);
+    }
+    return idList;
 }
 
 
@@ -59,7 +70,7 @@ if (document.getElementsByClassName("deleteItem") && (localStorage)){
         deleteItemButton[i].addEventListener("click", function deleteItem(e) {
             e.preventDefault();
             //remove product from cart and localstorage
-            cart.removeChild(this.closest("article")); //parentNode.parentNode.parentNode.parentNode
+            cart.removeChild(this.closest("article"));
             let price = JSON.parse(localStorage.getItem(key)).price;
             let qty = JSON.parse(localStorage.getItem(key)).qty;
             console.log(key);
@@ -70,6 +81,7 @@ if (document.getElementsByClassName("deleteItem") && (localStorage)){
     }
 }
 
+//event listener on quantity input change
 const qtyInput = document.getElementsByClassName("itemQuantity");
 for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
@@ -90,24 +102,30 @@ for (let i = 0; i < localStorage.length; i++) {
 }
 
 
+//event listener on #order button
+document.getElementById("order").addEventListener('click', async function clickOrder(e) {
+e.preventDefault();
 let contact = {
-    firstName: "romain",
-    lastName: "cezerac",
-    address: "ici",
-    city: "la",
-    email: "hercez92@hotmail.fr"
+    firstName: document.getElementById("firstName").value,
+    lastName: document.getElementById("lastName").value,
+    address: document.getElementById("address").value,
+    city: document.getElementById("city").value,
+    email: document.getElementById("email").value
 }
-let products = ["107fb5b75607497b96722bda5b504926"];
+let products = createIdList();
 let order = {contact, products};
-let orderId;
-console.log(contact);
-console.log(products);
 console.log(order);
 
-document.getElementById("order").addEventListener('click', async function postOrder(e) {
-e.preventDefault();
-//send order 
-let response = await fetch("http://localhost:3000/api/products/order", {
+let orderResponse = await postOrder(order);
+let orderId = orderResponse.orderId;
+console.log("Order Id : "+orderId);
+window.location= "./confirmation.html?orderId="+orderId;
+});
+}
+
+//send order
+async function postOrder(order) {
+    let response = await fetch("http://localhost:3000/api/products/order", {
 	method: "POST",
     headers: { 
         'Accept': 'application/json', 
@@ -115,13 +133,9 @@ let response = await fetch("http://localhost:3000/api/products/order", {
         },        
 	body: JSON.stringify(order)
     });
-orderResponse = await response.json();
-orderId = orderResponse.orderId;
-console.log("Order Id : "+orderId);
-window.location= "./confirmation.html?orderId="+orderId;
-});
+    
+return response.json();
 }
-
 
 //if confirmation page
 if (document.getElementById("orderId")) {
@@ -130,3 +144,4 @@ if (document.getElementById("orderId")) {
 
 //email   /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/g
 //names   /[^0-9\.\,\"\?\!\;\:\#\$\%\&\(\)\*\+\-\/\<\>\=\@\[\]\\\^\_\{\}\|\~]+/
+
