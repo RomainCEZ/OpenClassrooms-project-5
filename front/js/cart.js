@@ -57,70 +57,168 @@ function createIdList() {
 
 //if cart page
 if (document.getElementById("cart__items")) {
-setCartItems(keys);
-setTotals();
+    setCartItems(keys);
+    setTotals();
 
-if (document.getElementsByClassName("deleteItem") && (localStorage)){
-    const deleteItemButton = document.getElementsByClassName("deleteItem");
-    const cart = document.getElementById("cart__items");
+    if (document.getElementsByClassName("deleteItem") && (localStorage)){
+        const deleteItemButton = document.getElementsByClassName("deleteItem");
+        const cart = document.getElementById("cart__items");
 
-    //add event listener to every delete buttons
+        //add event listener to every delete buttons
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            deleteItemButton[i].addEventListener("click", function deleteItem(e) {
+                e.preventDefault();
+                //remove product from cart and localstorage
+                cart.removeChild(this.closest("article"));
+                let price = JSON.parse(localStorage.getItem(key)).price;
+                let qty = JSON.parse(localStorage.getItem(key)).qty;
+                console.log(key);
+                localStorage.removeItem(key);
+                calculateTotalPrice(-qty, price);
+                setTotals();
+            });
+        }
+    }
+
+    //event listener on quantity input change
+    const qtyInput = document.getElementsByClassName("itemQuantity");
     for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
-        deleteItemButton[i].addEventListener("click", function deleteItem(e) {
+        qtyInput[i].addEventListener("change", function changeQty(e) {
             e.preventDefault();
-            //remove product from cart and localstorage
-            cart.removeChild(this.closest("article"));
-            let price = JSON.parse(localStorage.getItem(key)).price;
-            let qty = JSON.parse(localStorage.getItem(key)).qty;
-            console.log(key);
-            localStorage.removeItem(key);
-            calculateTotalPrice(-qty, price);
+            const product = JSON.parse(localStorage.getItem(key));
+            let previousQty = product.qty;
+            let newQty = this.value;
+            let qtyDifference = newQty - previousQty;
+            let price = product.price;
+            console.log(`Previous quantity was : ${previousQty}`);
+            product.qty += qtyDifference;
+            console.log(`New quantity is : ${newQty}`);
+            localStorage.setItem(key, JSON.stringify(product));
+            calculateTotalPrice(qtyDifference, price);
             setTotals();
         });
     }
-}
 
-//event listener on quantity input change
-const qtyInput = document.getElementsByClassName("itemQuantity");
-for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    qtyInput[i].addEventListener("change", function changeQty(e) {
+    const firstNameInput = document.getElementById("firstName");
+    const firstNameErrorMsg = document.getElementById("firstNameErrorMsg");
+    let validFirstName = testText(firstNameInput.value)
+    document.getElementById("firstName").addEventListener('change', function checkInput() {
+        validFirstName = testText(firstNameInput.value)
+        if (!validFirstName) {
+            firstNameErrorMsg.innerHTML = "Veuillez saisir un prénom valide."
+        } else {
+            firstNameErrorMsg.innerHTML = ""
+        }
+    })
+
+    const lastNameInput = document.getElementById("lastName");
+    const lastNameErrorMsg = document.getElementById("lastNameErrorMsg");
+    let validLastName = testText(lastNameInput.value);
+    document.getElementById("lastName").addEventListener('change', function checkInput() {
+        validLastName = testText(lastNameInput.value);
+        if (!validLastName) {
+            lastNameErrorMsg.innerHTML = "Veuillez saisir un nom valide."
+        } else {
+            lastNameErrorMsg.innerHTML = ""
+        }
+    })
+
+    const addressInput = document.getElementById("address");
+    const addressErrorMsg = document.getElementById("addressErrorMsg");
+    let validAddress = testAddress(addressInput.value);
+    document.getElementById("address").addEventListener('change', function checkInput() {
+        validAddress = testAddress(addressInput.value);
+        if (!validAddress) {
+            addressErrorMsg.innerHTML = "Veuillez saisir une adresse valide."
+        } else {
+            addressErrorMsg.innerHTML = ""
+        }
+    })
+
+    const cityInput = document.getElementById("city");
+    const cityErrorMsg = document.getElementById("cityErrorMsg");
+    let validCity = testText(cityInput.value);
+    document.getElementById("city").addEventListener('change', function checkInput() {
+        validCity = testText(cityInput.value);
+        if (!validCity) {
+            cityErrorMsg.innerHTML = "Veuillez saisir une ville valide."
+        } else {
+            cityErrorMsg.innerHTML = ""
+        }
+    })
+
+    const emailInput = document.getElementById("email");
+    const emailErrorMsg = document.getElementById("emailErrorMsg");
+    let validEmail = testEmail(emailInput.value);
+    document.getElementById("email").addEventListener('change', function checkInput() {
+        validEmail = testEmail(emailInput.value);
+        if (!validEmail) {
+            emailErrorMsg.innerHTML = "Veuillez saisir une adresse email valide."
+        } else {
+            emailErrorMsg.innerHTML = ""
+        }
+    })
+
+    //event listener on #order button
+    document.getElementById("order").addEventListener('click', async function clickOrder(e) {
         e.preventDefault();
-        const product = JSON.parse(localStorage.getItem(key));
-        let previousQty = product.qty;
-        let newQty = this.value;
-        let qtyDifference = newQty - previousQty;
-        let price = product.price;
-        console.log(`Previous quantity was : ${previousQty}`);
-        product.qty += qtyDifference;
-        console.log(`New quantity is : ${newQty}`);
-        localStorage.setItem(key, JSON.stringify(product));
-        calculateTotalPrice(qtyDifference, price);
-        setTotals();
-    });
-}
 
+        validFirstName = testText(firstNameInput.value)
+        if (!validFirstName) {
+            firstNameErrorMsg.innerHTML = "Veuillez saisir un prénom valide."
+        } else {
+            firstNameErrorMsg.innerHTML = ""
+        }
 
-//event listener on #order button
-document.getElementById("order").addEventListener('click', async function clickOrder(e) {
-e.preventDefault();
-let contact = {
-    firstName: document.getElementById("firstName").value,
-    lastName: document.getElementById("lastName").value,
-    address: document.getElementById("address").value,
-    city: document.getElementById("city").value,
-    email: document.getElementById("email").value
-}
-let products = createIdList();
-let order = {contact, products};
-console.log(order);
+        validLastName = testText(lastNameInput.value);
+        if (!validLastName) {
+            lastNameErrorMsg.innerHTML = "Veuillez saisir un nom valide."
+        } else {
+            lastNameErrorMsg.innerHTML = ""
+        }
 
-let orderResponse = await postOrder(order);
-let orderId = orderResponse.orderId;
-console.log("Order Id : "+orderId);
-window.location= "./confirmation.html?orderId="+orderId;
-});
+        validAddress = testAddress(addressInput.value);
+        if (!validAddress) {
+            addressErrorMsg.innerHTML = "Veuillez saisir une adresse valide."
+        } else {
+            addressErrorMsg.innerHTML = ""
+        }
+
+        validCity = testText(cityInput.value);
+        if (!validCity) {
+            cityErrorMsg.innerHTML = "Veuillez saisir une ville valide."
+        } else {
+            cityErrorMsg.innerHTML = ""
+        }
+
+        validEmail = testEmail(emailInput.value);
+        if (!validEmail) {
+            emailErrorMsg.innerHTML = "Veuillez saisir une adresse email valide."
+        } else {
+            emailErrorMsg.innerHTML = ""
+        }
+        
+        if (validFirstName && validLastName && validAddress && validCity && validEmail) {
+            let contact = {
+                firstName: document.getElementById("firstName").value,
+                lastName: document.getElementById("lastName").value,
+                address: document.getElementById("address").value,
+                city: document.getElementById("city").value,
+                email: document.getElementById("email").value
+            }
+            let products = createIdList();
+            let order = {contact, products};
+            console.log(order);
+
+            let orderResponse = await postOrder(order);
+            let orderId = orderResponse.orderId;
+            console.log("Order Id : "+orderId);
+            window.location= "./confirmation.html?orderId="+orderId;
+        }
+
+        });
 }
 
 //send order
@@ -130,10 +228,10 @@ async function postOrder(order) {
     headers: { 
         'Accept': 'application/json', 
         'Content-Type': 'application/json' 
-        },        
+        },
 	body: JSON.stringify(order)
     });
-    
+
 return response.json();
 }
 
@@ -142,6 +240,18 @@ if (document.getElementById("orderId")) {
     setOrderId();
 }
 
-//email   /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/g
-//names   /[^0-9\.\,\"\?\!\;\:\#\$\%\&\(\)\*\+\-\/\<\>\=\@\[\]\\\^\_\{\}\|\~]+/
 
+function testEmail(value) {
+        return /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/i.test(value);
+}
+
+function testAddress(value) {
+    return /^[^\.\,\"\?\!\;\:\#\$\%\&\(\)\*\+\/\<\>\=\@\[\]\\\^\_\{\}\|\~]+$/.test(value);
+}
+
+function testText(value) {
+    return /^[^0-9\.\,\"\?\!\;\:\#\$\%\&\(\)\*\+\/\<\>\=\@\[\]\\\^\_\{\}\|\~]+$/.test(value);
+}
+
+//  /^[\s-'A-zÀ-ÖØ-öø-ÿ]+$/ 
+//  /^[-'\s\p{L}\p{M}]+$/muig
