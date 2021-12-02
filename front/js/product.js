@@ -47,18 +47,18 @@ document.getElementById("addToCart").addEventListener("click", function saveProd
     e.preventDefault();
     saveColor();
     saveQty();
-    let newQty = Number(document.getElementById("quantity").value);
+    const qty = document.getElementById("quantity");
     //can only add to cart if quantity is 1 or more and a color is selected
-    if ((newQty > 0) && (product.color != "")){
-        let isDuplicate = checkDuplicateProduct(product.name, product.color); 
+    if ((Number(qty.value) > 0) && (product.color != "")){
+        const isDuplicate = checkDuplicateProduct(product.name, product.color); 
         if (!isDuplicate) {
             const newKey = generateKey(keys);
             saveNewProduct(newKey);
         } else {
             //function addQty(product.qty, isDuplicate);
             const key = isDuplicate;
-            const previousQty = JSON.parse(localStorage.getItem(key)).qty;
-            product.qty = previousQty + newQty;
+            const storedQty = JSON.parse(localStorage.getItem(key)).qty;
+            product.qty = storedQty + (Number(qty.value));
             localStorage.setItem(key, JSON.stringify(product));
             }
         //redirect to url
@@ -97,26 +97,25 @@ async function fillProductPage() {
 
 //add productColor to product object
 function saveColor() {
-    let select = document.getElementById("colors");
-    let color = select.options[select.selectedIndex].value;
-    product.color = color;
+    const select = document.getElementById("colors");
+    const color = select.options[select.selectedIndex];
+    product.color = color.value;
 }
 
 //add productQty to product object
 function saveQty() {
-    let qty = Number(document.getElementById("quantity").value);
-    product.qty = qty;
+    const qty = document.getElementById("quantity");
+    product.qty = Number(qty.value);
 }
+
 
 //generate a unique newKey from existing localstorage keys
 function generateKey(keys) {
     //if localstorage exists, newKey is the sum of all keys + 1 so we can't overwrite an existing key
-    let newKey = 0;
     if (localStorage) {
-        keys.forEach( key => {
-            newKey += Number(key) + 1;
-        })
-        return newKey;
+        const reducer = (key1, key2) => Number(key1) + Number(key2);
+        return keys.reduce(reducer);
+        
     }
     return 0;
 }
@@ -128,7 +127,7 @@ function saveNewProduct(newKey) {
 
 function checkDuplicateProduct(name, color) {
     if (localStorage.length > 0) {
-        for (let key of keys) {
+        for (const key of keys) {
             if ((name === JSON.parse(localStorage.getItem(key)).name) && (color === JSON.parse(localStorage.getItem(key)).color)) {
                 return key;
             }
