@@ -112,7 +112,12 @@ if (document.getElementById("cart__items")) {
             e.preventDefault();
             const product = JSON.parse(localStorage.getItem(key));
             let previousQty = product.qty;
-            let newQty = this.value;
+            let newQty = 1;
+            if (this.value > 0) {
+                newQty = this.value;
+            } else {
+                this.value = 1;
+            }
             let qtyDifference = newQty - previousQty;
             let price = product.price;
             console.log(`Previous quantity was : ${previousQty}`);
