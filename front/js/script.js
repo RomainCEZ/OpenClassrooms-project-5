@@ -1,4 +1,4 @@
-class product {
+class Product {
     constructor ({ _id, imageUrl, altTxt, name, description }) {
         this.id = _id,
         this.src = imageUrl,
@@ -7,15 +7,14 @@ class product {
         this.description = description
     }
 
-    get insertDataIntoProductHtml() {
-        const productHtml = `
-            <a href="./product.html?id=${this.id}">
-                <article><img src=${this.src} alt=${this.alt}/>
-                    <h3 class="productName">${this.name}</h3>
-                    <p class="productDescription">${this.description}</p>
-                </article>
-            </a>`;
-        return productHtml;
+    get insertProductIntoHtml() {
+        return `<a href="./product.html?id=${this.id}">
+                    <article>
+                        <img src=${this.src} alt=${this.alt}/>
+                        <h3 class="productName">${this.name}</h3>
+                        <p class="productDescription">${this.description}</p>
+                    </article>
+                </a>`;
     }
 }
 
@@ -27,8 +26,8 @@ async function getProductsFromApi() {
 
 function insertProductsIntoHtml() {
     const productsList = document.getElementById("items");
-    products.forEach( products => {
-        const productHtml = new product(products).insertDataIntoProductHtml;
+    products.forEach( ({ _id, imageUrl, altTxt, name, description }) => {
+        const productHtml = new Product({ _id, imageUrl, altTxt, name, description }).insertProductIntoHtml;
         productsList.innerHTML += productHtml;
     })
 }
