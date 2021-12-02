@@ -19,9 +19,13 @@ class Product {
 }
 
 async function getProductsFromApi() {
-    const response = await fetch("http://localhost:3000/api/products");
-    products = await response.json();
-    return products;
+    try {
+        const response = await fetch("http://localhost:3000/api/products");
+        products = await response.json();
+        return products;
+    } catch(err) {
+        console.log(err);
+    }
 }
 
 function insertProductsIntoHtml() {
