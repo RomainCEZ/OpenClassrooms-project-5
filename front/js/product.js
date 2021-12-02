@@ -112,10 +112,9 @@ function saveQty() {
 //generate a unique newKey from existing localstorage keys
 function generateKey(keys) {
     //if localstorage exists, newKey is the sum of all keys + 1 so we can't overwrite an existing key
-    if (localStorage) {
+    if (localStorage.length > 0) {
         const reducer = (key1, key2) => Number(key1) + Number(key2);
-        return keys.reduce(reducer);
-        
+        return Number(keys.reduce(reducer) + 1);
     }
     return 0;
 }
