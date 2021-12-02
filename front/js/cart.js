@@ -50,15 +50,19 @@ function createIdList() {
 
 //send order
 async function postOrder(order) {
-    const response = await fetch("http://localhost:3000/api/products/order", {
-	method: "POST",
-    headers: { 
-        'Accept': 'application/json', 
-        'Content-Type': 'application/json' 
-        },
-	body: JSON.stringify(order)
-    });
-    return response.json();
+    try {
+        const response = await fetch("http://localhost:3000/api/products/order", {
+	    method: "POST",
+        headers: { 
+            'Accept': 'application/json', 
+            'Content-Type': 'application/json' 
+            },
+	    body: JSON.stringify(order)
+        });
+        return response.json();
+    } catch(err) {
+        console.log(err);
+    }
 }
 
 function testEmail(value) {

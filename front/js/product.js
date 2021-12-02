@@ -75,9 +75,13 @@ function getIdFromUrl() {
 
 //get product from api
 async function getProductFromApi(productId) {
-    const res = await fetch(`http://localhost:3000/api/products/${productId}`);
-    product = await res.json();
-    return product;
+    try {
+        const res = await fetch(`http://localhost:3000/api/products/${productId}`);
+        product = await res.json();
+        return product;
+    } catch(err) {
+        console.log(err);
+    }
 }
 
 //get product infos and fill product page
