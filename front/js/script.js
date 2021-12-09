@@ -28,7 +28,7 @@ async function getProductsFromApi() {
     }
 }
 
-function insertProductsIntoHtml() {
+function insertProductsIntoHtml(products) {
     const productsList = document.getElementById("items");
     products.forEach( ({ _id, imageUrl, altTxt, name, description }) => {
         const productHtml = new Product({ _id, imageUrl, altTxt, name, description }).insertProductIntoHtml;
@@ -38,7 +38,7 @@ function insertProductsIntoHtml() {
 
 async function fillProductsPage() {
     const products = await getProductsFromApi();
-    insertProductsIntoHtml();
+    insertProductsIntoHtml(products);
 }
 
 fillProductsPage();
