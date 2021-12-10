@@ -61,16 +61,15 @@ class LocalstorageService {
         const keys = Object.keys(localStorage);
         const id = cartProduct.product.id;
         const color = cartProduct.color;
-        const qty = cartProduct.qty;
 
         //return the localstorage key if product is already in cart
         const productIsAlreadyInCart = LocalstorageService.checkIfProductIsAlreadyInCart(keys, id, color);
 
-        if (!productIsAlreadyInCart) {
+        if (productIsAlreadyInCart) {
+            LocalstorageService.addQty(productIsAlreadyInCart, cartProduct);
+        } else {
             const key = LocalstorageService.generateKey(keys);
             localStorage.setItem(key, JSON.stringify(cartProduct));
-        } else {
-            LocalstorageService.addQty(productIsAlreadyInCart, cartProduct);
         }
     }
 
@@ -102,7 +101,6 @@ class LocalstorageService {
             color: cartProduct.color,
             product: cartProduct.product
         })
-        console.log(updatedCartProduct);
         localStorage.setItem(key, JSON.stringify(updatedCartProduct));
     }
 
@@ -113,32 +111,34 @@ class LocalstorageService {
     }
 }
 
+
 fillProductPage();
 
-//save product to localStorage and redirect to cart page
-document.getElementById("addToCart").addEventListener("click", function saveProduct(e) {
-    e.preventDefault();
-    const cartProduct = CartProduct.createCartProduct({
-        qty: getQty(),
-        color: getColor(),
-        product: LocalstorageService.getTempSave()
-    })
-    console.log(cartProduct.color);
-    console.log(cartProduct.qty);
-    if (cartProduct.color != "") {
-    LocalstorageService.saveToCart(cartProduct);
 
-    window.location= "./cart.html";
+document.getElementById("addToCart").addEventListener("click", function saveProductOnClick(e) {
+    e.preventDefault();
+    const colorInput = document.getElementById("colors");
+    if (colorInput.value == "") {
+        // DISPLAY ERROR MESSAGE
+        // DISPLAY ERROR MESSAGE
+        // DISPLAY ERROR MESSAGE
+        // DISPLAY ERROR MESSAGE
+    } else {
+        const cartProduct = CartProduct.createCartProduct({
+            qty: getQty(),
+            color: getColor(),
+            product: LocalstorageService.getTempSave()
+        })
+        LocalstorageService.saveToCart(cartProduct);
+        goToUrl("./cart.html");
     }
 })
 
-//get product Id from the page Url and save it to productId variable
 function getIdFromUrl() {
     const productId = new URLSearchParams(document.location.search.substring(1)).get("id");
     return productId;
 }
 
-//get product from api
 async function getProductFromApi(productId) {
     try {
         const res = await fetch(`http://localhost:3000/api/products/${productId}`);
@@ -149,7 +149,6 @@ async function getProductFromApi(productId) {
     }
 }
 
-// get product infos and fill product page
 async function fillProductPage() {
     const productId = getIdFromUrl();
     const { _id, imageUrl, altTxt, name, description, colors, price } = await getProductFromApi(productId);
@@ -196,4 +195,8 @@ function setMinQtyToOne() {
             this.value = 1;
         }
     })
+}
+
+function goToUrl(URL) {
+    window.location= URL;
 }
