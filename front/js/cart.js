@@ -10,12 +10,91 @@ class Product {
     }
 }
 
-class ProductHtmlService {
+class HtmlService {
+    static addCartProductToHtml(product) {
+        return `<article class="cart__item" data-id="${product.id}">
+                    <div class="cart__item__img">
+                        <img src="${product.img.src}" alt="${product.img.alt}">
+                    </div>
+                    <div class="cart__item__content">
+                        <div class="cart__item__content__titlePrice">
+                            <h2>${product.name} ( ${product.color} )</h2>
+                            <p>${product.price} €</p></div><div class="cart__item__content__settings">
+                            <div class="cart__item__content__settings__quantity">
+                                <p>Qté : </p>
+                                <input type="number" class="itemQuantity" name="itemQuantity" min="1" max="100" value="${product.qty}">
+                            </div>
+                            <div class="cart__item__content__settings__delete">
+                                <p class="deleteItem">Supprimer</p>
+                            </div>
+                        </div>
+                    </div>
+                </article>`
+    }
+    static editFormErrorMsg(validInput, formInputHtmlId) {
+        const formInputHtml = document.getElementById(`${formInputHtmlId.id}ErrorMsg`);
+        if (!validInput) {
+            formInputHtml.innerHTML = "Champ invalide."
+        } else {
+            formInputHtml.innerHTML = ""
+        }
+    }
+}
 
+class LocalstorageService {
+    static updateQty(key, cartProduct) {
+        const storedQty = JSON.parse(localStorage.getItem(key)).qty;
+        const newQty = storedQty + cartProduct.qty;
+        const updatedCartProduct = CartProduct.createCartProduct({
+            qty: newQty,
+            color: cartProduct.color,
+            product: cartProduct.product
+        })
+        localStorage.setItem(key, JSON.stringify(updatedCartProduct));
+    }
 }
 
 class FormHandlerService {
+    static testEmail(string) {
+        return /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/i.test(string);
+    }
+    
+    static testAddress(string) {
+    return /^[0-9-'\s\p{L}\p{M}]+$/muig.test(string);
+    }
+    
+    static testName(string) {
+    return /^[-'\s\p{L}\p{M}]+$/muig.test(string);
+    }
 
+    static testNameValidity(formInputHtmlId) {
+        const validName = FormHandlerService.testName(formInputHtmlId.value);
+        HtmlService.editFormErrorMsg(validName, formInputHtmlId);
+        return validName;
+    }
+    
+    static testAdressValidity(formInputHtmlId) {
+        const validAddress = FormHandlerService.testAddress(formInputHtmlId.value);
+        HtmlService.editFormErrorMsg(validAddress, formInputHtmlId);
+        return validAddress;
+    }
+    
+    static testEmailValidity(formInputHtmlId) {
+        const validEmail = FormHandlerService.testEmail(formInputHtmlId.value);
+        HtmlService.editFormErrorMsg(validEmail, formInputHtmlId);
+        return validEmail;
+    }
+
+    static testFormValidity() {
+        const validFirstName = FormHandlerService.testNameValidity(firstName);
+        const validLastName = FormHandlerService.testNameValidity(lastName);
+        const validAddress = FormHandlerService.testAdressValidity(address);
+        const validCity = FormHandlerService.testAdressValidity(city);
+        const validEmail = FormHandlerService.testEmailValidity(email);
+        if (validFirstName && validLastName && validAddress && validCity && validEmail) {
+            return true;
+        }
+    }
 }
 
 let totalPrice = 0;
@@ -23,7 +102,8 @@ let totalQty = 0;
 const keys = Object.keys(localStorage); //list all localstorage keys
 
 function setCartItem(product) {
-    document.getElementById("cart__items").innerHTML += `<article class="cart__item" data-id="${product.id}"><div class="cart__item__img"><img src="${product.img.src}" alt="${product.img.alt}"></div><div class="cart__item__content"><div class="cart__item__content__titlePrice"><h2>${product.name} ( ${product.color} )</h2><p>${product.price} €</p></div><div class="cart__item__content__settings"><div class="cart__item__content__settings__quantity"><p>Qté : </p><input type="number" class="itemQuantity" name="itemQuantity" min="1" max="100" value="${product.qty}"></div><div class="cart__item__content__settings__delete"><p class="deleteItem">Supprimer</p></div></div></div></article>`;
+    const productHtml = HtmlService.addCartProductToHtml(product);
+    document.getElementById("cart__items").innerHTML += productHtml;
 }
 
 function setCartItems(keys) {
@@ -60,18 +140,16 @@ function displayOrderId() {
     document.getElementById("orderId").innerHTML = orderId;
 }
 
-//create list of product id
 function createIdList() {
     let idList = [];
     for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
         const product = JSON.parse(localStorage.getItem(key));
-        idList.push(product._id);
+        idList.push(product.product.id);
     }
     return idList;
 }
 
-//send order
 async function postOrder(order) {
     try {
         const response = await fetch("http://localhost:3000/api/products/order", {
@@ -88,73 +166,6 @@ async function postOrder(order) {
     }
 }
 
-function setFirstNameErrorMsg(firstNameInput) {
-    const validFirstName = testName(firstNameInput.value)
-    const firstNameErrorMsg = document.getElementById("firstNameErrorMsg");
-    if (!validFirstName) {
-        firstNameErrorMsg.innerHTML = "Veuillez saisir un prénom valide."
-    } else {
-        firstNameErrorMsg.innerHTML = ""
-    }
-    return validFirstName;
-}
-
-function setLastNameErrorMsg(lastNameInput) {
-    const validLastName = testName(lastNameInput.value);
-    const lastNameErrorMsg = document.getElementById("lastNameErrorMsg");
-    if (!validLastName) {
-        lastNameErrorMsg.innerHTML = "Veuillez saisir un nom valide."
-    } else {
-        lastNameErrorMsg.innerHTML = ""
-    }
-    return validLastName;
-}
-        
-function setAddressErrorMsg(addressInput) {
-    const validAddress = testAddress(addressInput.value);
-    const addressErrorMsg = document.getElementById("addressErrorMsg");
-    if (!validAddress) {
-        addressErrorMsg.innerHTML = "Veuillez saisir une adresse valide."
-    } else {
-        addressErrorMsg.innerHTML = ""
-    }
-    return validAddress;
-}
-        
-function setCityErrorMsg(cityInput) {
-    const validCity = testAddress(cityInput.value);
-    const cityErrorMsg = document.getElementById("cityErrorMsg");
-    if (!validCity) {
-        cityErrorMsg.innerHTML = "Veuillez saisir une ville valide."
-    } else {
-        cityErrorMsg.innerHTML = ""
-    }
-    return validCity;
-}
-        
-function setEmailErrorMsg(emailInput) {
-    const validEmail = testEmail(emailInput.value);
-    const emailErrorMsg = document.getElementById("emailErrorMsg");
-    if (!validEmail) {
-        emailErrorMsg.innerHTML = "Veuillez saisir une adresse email valide."
-    } else {
-        emailErrorMsg.innerHTML = ""
-    }
-    return validEmail;
-}
-
-function testEmail(value) {
-    return /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/i.test(value);
-}
-
-function testAddress(value) {
-return /^[0-9-'\s\p{L}\p{M}]+$/muig.test(value);
-}
-
-//  /^[-'\s\p{L}\p{M}]+$/muig
-function testName(value) {
-return /^[-'\s\p{L}\p{M}]+$/muig.test(value);
-}
 
 //if cart page
 if (document.getElementById("cart__items")) {
@@ -172,8 +183,8 @@ if (document.getElementById("cart__items")) {
                 e.preventDefault();
                 //remove product from cart and localstorage
                 cart.removeChild(this.closest("article"));
-                let price = JSON.parse(localStorage.getItem(key)).price;
-                let qty = JSON.parse(localStorage.getItem(key)).qty;
+                const price = JSON.parse(localStorage.getItem(key)).product.price;
+                const qty = JSON.parse(localStorage.getItem(key)).qty;
                 localStorage.removeItem(key);
                 calculateTotalPrice(-qty, price);
                 setTotals();
@@ -192,7 +203,7 @@ if (document.getElementById("cart__items")) {
                 this.value = 1;
             }
             const qtyDifference = this.value - product.qty;
-            const price = product.price;
+            const price = product.product.price;
             product.qty += qtyDifference;
             localStorage.setItem(key, JSON.stringify(product));
             calculateTotalPrice(qtyDifference, price);
@@ -200,43 +211,38 @@ if (document.getElementById("cart__items")) {
         });
     }
 
-    const firstNameInput = document.getElementById("firstName");
-    document.getElementById("firstName").addEventListener('change', function checkInput() {
-        setFirstNameErrorMsg(firstNameInput);
+    const firstNameInputHtml = document.getElementById("firstName");
+    firstNameInputHtml.addEventListener('change', function checkInput() {
+        FormHandlerService.testNameValidity(firstNameInputHtml);
     })
 
-    const lastNameInput = document.getElementById("lastName");
-    document.getElementById("lastName").addEventListener('change', function checkInput() {
-        setLastNameErrorMsg(lastNameInput);
+    const lastNameInputHtml = document.getElementById("lastName");
+    lastNameInputHtml.addEventListener('change', function checkInput() {
+        FormHandlerService.testNameValidity(lastNameInputHtml);
     })
 
-    const addressInput = document.getElementById("address");
-    document.getElementById("address").addEventListener('change', function checkInput() {
-        setAddressErrorMsg(addressInput);
+    const addressInputHtml = document.getElementById("address");
+    addressInputHtml.addEventListener('change', function checkInput() {
+        FormHandlerService.testAdressValidity(addressInputHtml);
     })
 
-    const cityInput = document.getElementById("city");
-    document.getElementById("city").addEventListener('change', function checkInput() {
-        setCityErrorMsg(cityInput);
+    const cityInputHtml = document.getElementById("city");
+    cityInputHtml.addEventListener('change', function checkInput() {
+        FormHandlerService.testAdressValidity(cityInputHtml);
     })
 
-    const emailInput = document.getElementById("email");
-    document.getElementById("email").addEventListener('change', function checkInput() {
-        setEmailErrorMsg(emailInput);
+    const emailInputHtml = document.getElementById("email");
+    emailInputHtml.addEventListener('change', function checkInput() {
+        FormHandlerService.testEmailValidity(emailInputHtml);
     })
 
     //event listener on #order button
     document.getElementById("order").addEventListener('click', async function clickOrder(e) {
         e.preventDefault();
 
-        //form validation
-        const validFirstName = setFirstNameErrorMsg(firstNameInput);
-        const validLastName = setLastNameErrorMsg(lastNameInput);
-        const validAddress = setAddressErrorMsg(addressInput);
-        const validCity = setCityErrorMsg(cityInput);
-        const validEmail = setEmailErrorMsg(emailInput);
+        const formIsValid = FormHandlerService.testFormValidity();
         
-        if (validFirstName && validLastName && validAddress && validCity && validEmail) {
+        if (formIsValid) {
             const contact = {
                 firstName: document.getElementById("firstName").value,
                 lastName: document.getElementById("lastName").value,
