@@ -8,6 +8,20 @@ class Product {
         this.description = product.description,
         this.price = product.price
     }
+    static createProduct({ color, qty, product }) { 
+        return new Product({ color, qty, product });
+    }
+}
+
+class CartProduct {
+    constructor ({ qty, color, product}) {
+        this.qty = qty,
+        this.color = color,
+        this.product = product
+    }
+    static createCartProduct({ qty, color, product}) {
+        return new CartProduct({ qty, color, product});
+    }
 }
 
 class HtmlService {
@@ -31,6 +45,12 @@ class HtmlService {
                     </div>
                 </article>`
     }
+
+    static setCartItem(product) {
+        const productHtml = HtmlService.addCartProductToHtml(product);
+        document.getElementById("cart__items").innerHTML += productHtml;
+    }
+
     static editFormErrorMsg(validInput, formInputHtmlId) {
         const formInputHtml = document.getElementById(`${formInputHtmlId.id}ErrorMsg`);
         if (!validInput) {
@@ -39,18 +59,58 @@ class HtmlService {
             formInputHtml.innerHTML = ""
         }
     }
+
+    static setTotalQuantity(totalQuantity) {
+        document.getElementById("totalQuantity").innerHTML = totalQuantity;
+    }
+
+    static setTotalPrice(totalPrice) {
+        document.getElementById("totalPrice").innerHTML = totalPrice;
+    }
+
+    static displayOrderId(orderId) {
+        document.getElementById("orderId").innerHTML = orderId;
+    }
+
+    static forceInputMinValueToOne(inputQuerySelector) {
+        if (inputQuerySelector.value < 1) {
+            inputQuerySelector.value = 1;
+        }
+    }
 }
 
 class LocalstorageService {
-    static updateQty(key, cartProduct) {
-        const storedQty = JSON.parse(localStorage.getItem(key)).qty;
-        const newQty = storedQty + cartProduct.qty;
+    static getCartProduct(key) {
+        return JSON.parse(localStorage.getItem(key));
+    }
+
+    static saveCartProduct(key, cartProduct) {
+        localStorage.setItem(key, JSON.stringify(cartProduct));
+    }
+
+    static updateCartProductQty(key, newQty) {
+        const cartProduct = LocalstorageService.getCartProduct(key);
         const updatedCartProduct = CartProduct.createCartProduct({
             qty: newQty,
             color: cartProduct.color,
             product: cartProduct.product
         })
-        localStorage.setItem(key, JSON.stringify(updatedCartProduct));
+        LocalstorageService.saveCartProduct(key, updatedCartProduct);
+    }
+
+    static getProductQty(key) {
+        const qty = JSON.parse(localStorage.getItem(key)).qty;
+        return qty;
+    }
+
+    static getProductPrice(key) {
+        const price = JSON.parse(localStorage.getItem(key)).product.price;
+        return price;
+    }
+
+    static getKeysList() {
+        const keys = Object.keys(localStorage);
+        return keys
     }
 }
 
@@ -60,11 +120,11 @@ class FormHandlerService {
     }
     
     static testAddress(string) {
-    return /^[0-9-'\s\p{L}\p{M}]+$/muig.test(string);
+        return /^[0-9-'\s\p{L}\p{M}]+$/muig.test(string);
     }
     
     static testName(string) {
-    return /^[-'\s\p{L}\p{M}]+$/muig.test(string);
+        return /^[-'\s\p{L}\p{M}]+$/muig.test(string);
     }
 
     static testNameValidity(formInputHtmlId) {
@@ -97,97 +157,43 @@ class FormHandlerService {
     }
 }
 
-let totalPrice = 0;
-let totalQty = 0;
-const keys = Object.keys(localStorage); //list all localstorage keys
 
-function setCartItem(product) {
-    const productHtml = HtmlService.addCartProductToHtml(product);
-    document.getElementById("cart__items").innerHTML += productHtml;
-}
 
-function setCartItems(keys) {
-    for (let key of keys) {
-        const storedProduct = JSON.parse(localStorage.getItem(key));
-        const product = new Product({ 
-            color: storedProduct.color,
-            qty: storedProduct.qty,
-            product: storedProduct.product
-        });
-        setCartItem(product);
-        calculateTotalPrice(storedProduct.qty, storedProduct.product.price);
-    }
-}
-
-//calculate total number of items in cart and total price
-function calculateTotalPrice(qty, price) {
-    totalQty += qty;
-    totalPrice += price * qty;
-}
-
-//display total qty and total price
-function setTotals() {
-    document.getElementById("totalQuantity").innerHTML = totalQty;
-    document.getElementById("totalPrice").innerHTML = totalPrice;
-}
-
-function getIdFromUrl() {
-    return new URLSearchParams(document.location.search.substring(1)).get("orderId");
-}
-
-function displayOrderId() {
-    const orderId = getIdFromUrl();
-    document.getElementById("orderId").innerHTML = orderId;
-}
-
-function createIdList() {
-    let idList = [];
-    for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        const product = JSON.parse(localStorage.getItem(key));
-        idList.push(product.product.id);
-    }
-    return idList;
-}
-
-async function postOrder(order) {
-    try {
-        const response = await fetch("http://localhost:3000/api/products/order", {
-	    method: "POST",
-        headers: { 
-            'Accept': 'application/json', 
-            'Content-Type': 'application/json' 
-            },
-	    body: JSON.stringify(order)
-        });
-        return response.json();
-    } catch(err) {
-        console.log(err);
-    }
-}
-
+//            //
+//            //
+// CART PAGE  //
+//            //
+//            //
 
 //if cart page
 if (document.getElementById("cart__items")) {
+    const keys = LocalstorageService.getKeysList();
     setCartItems(keys);
-    setTotals();
+
+    const totalQuantity = calculateTotalQty();
+    HtmlService.setTotalQuantity(totalQuantity);
+
+    const totalPrice = calculateTotalPrice();
+    HtmlService.setTotalPrice(totalPrice);
 
     if (document.getElementsByClassName("deleteItem") && (localStorage)){
         const deleteItemButton = document.getElementsByClassName("deleteItem");
-        const cart = document.getElementById("cart__items");
+        const cartHtml = document.getElementById("cart__items");
 
-        //add event listener to every delete buttons
+        //event listener to every delete buttons
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
             deleteItemButton[i].addEventListener("click", function deleteItem(e) {
                 e.preventDefault();
                 //remove product from cart and localstorage
-                cart.removeChild(this.closest("article"));
-                const price = JSON.parse(localStorage.getItem(key)).product.price;
-                const qty = JSON.parse(localStorage.getItem(key)).qty;
+                cartHtml.removeChild(this.closest("article"));
                 localStorage.removeItem(key);
-                calculateTotalPrice(-qty, price);
-                setTotals();
+
+                const totalQuantity = calculateTotalQty();
+                HtmlService.setTotalQuantity(totalQuantity);
+
+                const totalPrice = calculateTotalPrice();
+                HtmlService.setTotalPrice(totalPrice);
             });
         }
     }
@@ -198,16 +204,14 @@ if (document.getElementById("cart__items")) {
         const key = localStorage.key(i);
         qtyInput[i].addEventListener("change", function changeQty(e) {
             e.preventDefault();
-            const product = JSON.parse(localStorage.getItem(key));
-            if (this.value < 1) {
-                this.value = 1;
-            }
-            const qtyDifference = this.value - product.qty;
-            const price = product.product.price;
-            product.qty += qtyDifference;
-            localStorage.setItem(key, JSON.stringify(product));
-            calculateTotalPrice(qtyDifference, price);
-            setTotals();
+            HtmlService.forceInputMinValueToOne(this);
+            LocalstorageService.updateCartProductQty(key, this.value);
+
+            const totalQuantity = calculateTotalQty();
+            HtmlService.setTotalQuantity(totalQuantity);
+
+            const totalPrice = calculateTotalPrice();
+            HtmlService.setTotalPrice(totalPrice);
         });
     }
 
@@ -236,7 +240,6 @@ if (document.getElementById("cart__items")) {
         FormHandlerService.testEmailValidity(emailInputHtml);
     })
 
-    //event listener on #order button
     document.getElementById("order").addEventListener('click', async function clickOrder(e) {
         e.preventDefault();
 
@@ -259,11 +262,79 @@ if (document.getElementById("cart__items")) {
     });
 }
 
-//if confirmation page
-if (document.getElementById("orderId")) {
-    displayOrderId();
+function setCartItems(keys) {
+    keys.forEach ( key => {
+        const cartProduct = LocalstorageService.getCartProduct(key);
+        const product = Product.createProduct(cartProduct);
+        HtmlService.setCartItem(product);
+    })
+}
+
+function calculateTotalQty() {
+    const keys = LocalstorageService.getKeysList();
+    let totalQty = 0;
+    for (const key of keys) {
+        const qty = LocalstorageService.getProductQty(key);
+        totalQty += Number(qty);
+    }
+    return totalQty;
+}
+
+function calculateTotalPrice() {
+    const keys = LocalstorageService.getKeysList();
+    let totalPrice = 0;
+    for (const key of keys) {
+        const price = LocalstorageService.getProductPrice(key);
+        const qty = LocalstorageService.getProductQty(key);
+        totalPrice += (Number(qty) * Number(price));
+    }
+    return totalPrice;
+}
+
+function createIdList() {
+    let idList = [];
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        const product = JSON.parse(localStorage.getItem(key));
+        idList.push(product.product.id);
+    }
+    return idList;
+}
+
+async function postOrder(order) {
+    try {
+        const response = await fetch("http://localhost:3000/api/products/order", {
+	    method: "POST",
+        headers: { 
+            'Accept': 'application/json', 
+            'Content-Type': 'application/json' 
+            },
+	    body: JSON.stringify(order)
+        });
+        return response.json();
+    } catch(err) {
+        console.log(err);
+    }
 }
 
 function goToUrl(URL) {
     window.location= URL;
+}
+
+
+
+//                   //
+//                   //
+// CONFIRMATION PAGE //
+//                   //
+//                   //
+
+//if confirmation page
+if (document.getElementById("orderId")) {
+    const orderId = getIdFromUrl();
+    HtmlService.displayOrderId(orderId);
+}
+
+function getOrderIdFromUrl() {
+    return new URLSearchParams(document.location.search.substring(1)).get("orderId");
 }
