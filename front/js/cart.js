@@ -198,7 +198,7 @@ class CartPage {
 
     setCartEventListeners() {
         const cartPage = this;
-        if (document.getElementsByClassName("deleteItem") && (localStorage)){
+        try {
             const deleteItemButton = document.getElementsByClassName("deleteItem");
             const cartHtml = document.getElementById("cart__items");
             //event listener to every delete buttons
@@ -212,7 +212,7 @@ class CartPage {
                     cartPage.updateTotalQtyAndPrice();
                 });
             }
-        }
+        } catch(error) {}
         //event listener on quantity input change
         const qtyInput = document.getElementsByClassName("itemQuantity");
         for (let i = 0; i < localStorage.length; i++) {
