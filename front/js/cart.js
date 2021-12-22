@@ -198,21 +198,21 @@ class CartPage {
 
     setCartEventListeners() {
         const cartPage = this;
-        try {
-            const deleteItemButton = document.getElementsByClassName("deleteItem");
-            const cartHtml = document.getElementById("cart__items");
-            //event listener to every delete buttons
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                deleteItemButton[i].addEventListener("click", function deleteItemOnClick(e) {
-                    e.preventDefault();
-                    //remove product from cart and localstorage
-                    cartHtml.removeChild(this.closest("article"));
-                    LocalstorageService.removeCartProduct(key);
-                    cartPage.updateTotalQtyAndPrice();
-                });
-            }
-        } catch(error) {}
+
+        const deleteItemButton = document.getElementsByClassName("deleteItem");
+        const cartHtml = document.getElementById("cart__items");
+        //event listener to every delete buttons
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            deleteItemButton[i].addEventListener("click", function deleteItemOnClick(e) {
+                e.preventDefault();
+                //remove product from cart and localstorage
+                cartHtml.removeChild(this.closest("article"));
+                LocalstorageService.removeCartProduct(key);
+                cartPage.updateTotalQtyAndPrice();
+            });
+        }
+
         //event listener on quantity input change
         const qtyInput = document.getElementsByClassName("itemQuantity");
         for (let i = 0; i < localStorage.length; i++) {
@@ -222,8 +222,7 @@ class CartPage {
                 HtmlService.forceInputMinMaxValue(this);
                 LocalstorageService.updateCartProductQty(key, this.value);
                 cartPage.updateTotalQtyAndPrice();
-            }
-            );
+            });
         }
     }
 
@@ -263,11 +262,15 @@ class CartPage {
                     city: document.getElementById("city").value,
                     email: document.getElementById("email").value
                 }
-                const products = this.createIdList();
-                const order = {contact, products};
-                const orderResponse = await this.postOrder(order);
-                const orderId = orderResponse.orderId;
-                this.router.goToUrl(`./confirmation.html?orderId=${orderId}`);
+                try {
+                    const products = this.createIdList();
+                    const order = {contact, products};
+                    const orderResponse = await this.postOrder(order);
+                    const orderId = orderResponse.orderId;
+                    this.router.goToUrl(`./confirmation.html?orderId=${orderId}`);
+                } catch(error) {
+                    console.log(error)
+                }
             }
         }
         document.getElementById("order").addEventListener('click', sendOrderOnClick)
@@ -307,6 +310,9 @@ class CartPage {
             const key = localStorage.key(i);
             const product = LocalstorageService.getCartProduct(key);
             idList.push(product.product.id);
+        }
+        if (idList.length == 0) {
+            throw new Error("Panier vide")
         }
         return idList;
     }
