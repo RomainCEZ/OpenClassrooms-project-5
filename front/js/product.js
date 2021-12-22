@@ -38,6 +38,8 @@ class ProductHtmlService {
         this.document = document;
     }
     addProductIntoPage(product) {
+        this.document.title = `${product.name}`;
+
         this.document.getElementById("title")
         .innerHTML = `${product.name}`;
 
