@@ -19,44 +19,72 @@ class CartProduct {
         this.product = product
     }
     static createCartProduct({ qty, color, product}) {
+        CartProduct.checkParameters(qty, color);
         return new CartProduct({ qty, color, product});
+    }
+
+    static checkParameters(qty, color) {
+        if ( color === "") {
+            throw new Error("*Veuillez choisir une couleur.*");
+        }
+        if ( qty < 1 || qty > 100 ) {
+            throw new Error("*Veuillez saisir une quantité entre 1 et 100.*");
+        }
     }
 }
 
 class ProductHtmlService {
-    static addProductNameToHtml(productName) {
-        document.getElementById("title")
-            .innerHTML = `${productName}`;
+    constructor (document) {
+        this.document = document;
     }
+    addProductIntoPage(product) {
+        this.document.getElementById("title")
+        .innerHTML = `${product.name}`;
 
-    static addProductImgToHtml({productImgSrc, productImgAlt}) {
-        document.querySelector(".item__img")
-        .innerHTML = `<img src="${productImgSrc}" alt="${productImgAlt}">`;
-    }
-
-    static addProductDescriptionToHtml(productDescription) {
+        this.document.querySelector(".item__img")
+        .innerHTML = `<img src="${product.img.src}" alt="${product.img.alt}">`;
         document.getElementById("description")
-            .innerHTML = `${productDescription}`;
-    }
+            .innerHTML = `${product.description}`;
 
-    static addProductPriceToHtml(productPrice) {
-        document.getElementById("price")
-            .innerHTML = `${productPrice}`;
-    }
+        this.document.getElementById("price")
+        .innerHTML = `${product.price}`;
 
-    static addProductColorsToHtml(productColors) {
-        productColors.forEach( color => {
-            document.getElementById("colors")
+        product.colors.forEach( color => {
+            this.document.getElementById("colors")
                 .innerHTML += `<option value="${color}">${color}</option>`;
         })
+    }
+
+    getColor() {
+        const colorsSelect = this.document.getElementById("colors");
+        const colorOption = colorsSelect.options[colorsSelect.selectedIndex];
+        return colorOption.value;
+    }
+    
+    getQty() {
+        const qtyInput = this.document.getElementById("quantity");
+        return Number(qtyInput.value);
+    }
+    
+    setMinQtyToOne() {
+        const qtyInput = this.document.getElementById("quantity");
+        qtyInput.value = 1;
     }
 }
 
 class LocalstorageService {
-    static tempSave(product) {
-        localStorage.setItem("tempSave", JSON.stringify(product));
+    static getCartProduct(key) {
+        return JSON.parse(localStorage.getItem(key));
     }
 
+    static saveCartProduct(key, cartProduct) {
+        localStorage.setItem(key, JSON.stringify(cartProduct));
+    }
+
+    static removeCartProduct(key) {
+        localStorage.removeItem(key);
+    }
+    
     static saveToCart(cartProduct) {
         const keys = Object.keys(localStorage);
         const id = cartProduct.product.id;
@@ -64,19 +92,21 @@ class LocalstorageService {
 
         //return the localstorage key if product is already in cart
         const productIsAlreadyInCart = LocalstorageService.checkIfProductIsAlreadyInCart(keys, id, color);
+        console.log(productIsAlreadyInCart);
 
         if (productIsAlreadyInCart) {
             LocalstorageService.addQty(productIsAlreadyInCart, cartProduct);
         } else {
             const key = LocalstorageService.generateKey(keys);
-            localStorage.setItem(key, JSON.stringify(cartProduct));
+            LocalstorageService.saveCartProduct(key, cartProduct);
         }
     }
 
     static checkIfProductIsAlreadyInCart(keys, id, color) {
         if (localStorage.length > 0) {
             for (const key of keys) {
-                if ((id === JSON.parse(localStorage.getItem(key)).product.id) && (color === JSON.parse(localStorage.getItem(key)).color)) {
+                const cartProduct = LocalstorageService.getCartProduct(key);
+                if ((id === cartProduct.product.id) && (color === cartProduct.color)) {
                     return key;
                 }
             }
@@ -95,7 +125,7 @@ class LocalstorageService {
 
     static addQty(key, cartProduct) {
         const storedQty = JSON.parse(localStorage.getItem(key)).qty;
-        const newQty = storedQty + cartProduct.qty;
+        const newQty = Number(storedQty) + Number(cartProduct.qty);
         const updatedCartProduct = CartProduct.createCartProduct({
             qty: newQty,
             color: cartProduct.color,
@@ -103,100 +133,62 @@ class LocalstorageService {
         })
         localStorage.setItem(key, JSON.stringify(updatedCartProduct));
     }
-
-    static getTempSave() {
-        const product = JSON.parse(localStorage.getItem("tempSave"));
-        localStorage.removeItem("tempSave");
-        return product;
-    }
 }
 
-
-fillProductPage();
-
-
-document.getElementById("addToCart").addEventListener("click", function saveProductOnClick(e) {
-    e.preventDefault();
-    const colorInput = document.getElementById("colors");
-    if (colorInput.value == "") {
-        // DISPLAY ERROR MESSAGE
-        // DISPLAY ERROR MESSAGE
-        // DISPLAY ERROR MESSAGE
-        // DISPLAY ERROR MESSAGE
-    } else {
-        const cartProduct = CartProduct.createCartProduct({
-            qty: getQty(),
-            color: getColor(),
-            product: LocalstorageService.getTempSave()
-        })
-        LocalstorageService.saveToCart(cartProduct);
-        goToUrl("./cart.html");
-    }
-})
-
-function getIdFromUrl() {
-    const productId = new URLSearchParams(document.location.search.substring(1)).get("id");
-    return productId;
-}
-
-async function getProductFromApi(productId) {
-    try {
-        const res = await fetch(`http://localhost:3000/api/products/${productId}`);
-        product = await res.json();
-        return product;
-    } catch(err) {
-        console.log(err);
-    }
-}
-
-async function fillProductPage() {
-    const productId = getIdFromUrl();
-    const { _id, imageUrl, altTxt, name, description, colors, price } = await getProductFromApi(productId);
-    const productModel = Product.createProduct({
-        id: _id,
-        img: {
-            src: imageUrl,
-            alt: altTxt
-        },
-        name,
-        description,
-        colors,
-        price
-    });
-    ProductHtmlService.addProductImgToHtml({productImgSrc: productModel.img.src, productImgAlt: productModel.img.alt});
-    ProductHtmlService.addProductNameToHtml(productModel.name);
-    ProductHtmlService.addProductDescriptionToHtml(productModel.description);
-    ProductHtmlService.addProductPriceToHtml(productModel.price);
-    ProductHtmlService.addProductColorsToHtml(productModel.colors);
-    LocalstorageService.tempSave(productModel);
-    setMinQtyToOne();
-}
-
-function getColor() {
-    const colorsSelect = document.getElementById("colors");
-    const colorOption = colorsSelect.options[colorsSelect.selectedIndex];
-    return colorOption.value;
-}
-
-function getQty() {
-    const qtyInput = document.getElementById("quantity");
-    return Number(qtyInput.value);
-}
-
-function setMinQtyToOne() {
-    const qtyInput = document.getElementById("quantity");
-    if (qtyInput.value < 1) {
-        qtyInput.value = 1;
-    }
-
-    qtyInput.addEventListener("change", function forceMinQtyToOne(e) {
-        e.preventDefault();
-        if (this.value < 1) {
-            this.value = 1;
+class ProductProvider {
+    async getProductById(id) {
+        try {
+            const res = await fetch(`http://localhost:3000/api/products/${id}`);
+            const product = await res.json();
+            return new Product({ 
+                id: product._id,
+                img: {
+                    src: product.imageUrl,
+                    alt: product.altTxt
+                }, 
+                name: product.name,
+                description: product.description,
+                colors: product.colors,
+                price: product.price 
+            });
+        } catch(err) {
+            console.log(err);
         }
-    })
+    }
 }
 
-function goToUrl(URL) {
-    window.location= URL;
+class ProductPage {
+    constructor(productHtmlService, productProvider, router) {
+        this.productHtmlService = productHtmlService;
+        this.productProvider = productProvider;
+        this.router = router;
+    }
+
+    async renderHtml() {
+        const productId = this.router.getParamFromUrl("id");
+        const product = await this.productProvider.getProductById(productId);
+        this.productHtmlService.addProductIntoPage(product);
+        this.addToCartClickEventListener(product);
+    }
+
+    addToCartClickEventListener(product) {
+        const saveProductOnClick = e => {
+            e.preventDefault();
+            try {
+                const cartProduct = CartProduct.createCartProduct({
+                    qty: this.productHtmlService.getQty(),
+                    color: this.productHtmlService.getColor(),
+                    product
+                })
+                LocalstorageService.saveToCart(cartProduct);
+                this.router.goToUrl("./cart.html");
+            } catch(error) {
+                document.getElementById("errorMsg").innerHTML = error.message;
+            }
+        }
+        document.getElementById("addToCart").addEventListener("click", saveProductOnClick);
+    }
 }
+
+// const productPage = new ProductPage(new ProductHtmlService(document), new ProductProvider(), new Router())
+// productPage.renderHtml();
