@@ -75,6 +75,11 @@
         </div>
       </div>
     </footer>
+  <script src = "../js/router.js"></script>
   <script src="../js/cart.js"></script>
+  <script>
+    const confirmationPage = new ConfirmationPage( new HtmlService(document), new Router());
+    confirmationPage.renderHtml();
+  </script>
   </body>
 </html>

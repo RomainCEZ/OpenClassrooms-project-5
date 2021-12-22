@@ -76,7 +76,9 @@
                   <input type="number" name="itemQuantity" min="1" max="100" value="0" id="quantity">
                 </div>
               </div>
-
+              <div>
+                <p id="errorMsg"></p>
+              </div>
               <div class="item__content__addButton">
                 <button id="addToCart">Ajouter au panier</button>
               </div>
@@ -110,6 +112,11 @@
         </div>
       </div>
     </footer>
-  <script src="../js/product.js"></script>
+    <script src = "../js/router.js"></script>
+    <script src="../js/product.js"></script>
+    <script>
+      const productPage = new ProductPage(new ProductHtmlService(document), new ProductProvider(), new Router())
+      productPage.renderHtml();
+    </script>
   </body>
 </html>

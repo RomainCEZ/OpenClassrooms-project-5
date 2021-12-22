@@ -132,6 +132,11 @@
         </div>
       </div>
     </footer>
+  <script src = "../js/router.js"></script>
   <script src="../js/cart.js"></script>
+  <script>
+    const cartPage = new CartPage( new HtmlService(document), new FormHandlerService(), new Router());
+    cartPage.renderHtml();
+  </script>
   </body>
 </html>
