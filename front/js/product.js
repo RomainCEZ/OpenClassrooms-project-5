@@ -76,7 +76,8 @@ class ProductHtmlService {
 
 class LocalstorageService {
     static getCartProduct(key) {
-        return JSON.parse(localStorage.getItem(key));
+        const product = localStorage.getItem(key);
+        return product ? JSON.parse(product) : null;
     }
 
     static saveCartProduct(key, cartProduct) {
@@ -87,53 +88,31 @@ class LocalstorageService {
         localStorage.removeItem(key);
     }
     
-    static saveToCart(cartProduct) {
-        const keys = Object.keys(localStorage);
+    static addProductToCart(cartProduct) {
         const id = cartProduct.product.id;
         const color = cartProduct.color;
-
-        //return the localstorage key if product is already in cart
-        const productIsAlreadyInCart = LocalstorageService.checkIfProductIsAlreadyInCart(keys, id, color);
-        console.log(productIsAlreadyInCart);
-
-        if (productIsAlreadyInCart) {
-            LocalstorageService.addQty(productIsAlreadyInCart, cartProduct);
+        const key = LocalstorageService.getKey(id, color);
+        const storedCartProduct = LocalstorageService.getCartProduct(key);
+        if (storedCartProduct) {
+            LocalstorageService.updateCartProductWithNewQty(key, storedCartProduct, cartProduct.qty);
         } else {
-            const key = LocalstorageService.generateKey(keys);
             LocalstorageService.saveCartProduct(key, cartProduct);
         }
     }
 
-    static checkIfProductIsAlreadyInCart(keys, id, color) {
-        if (localStorage.length > 0) {
-            for (const key of keys) {
-                const cartProduct = LocalstorageService.getCartProduct(key);
-                if ((id === cartProduct.product.id) && (color === cartProduct.color)) {
-                    return key;
-                }
-            }
-        }
-        return false;
+    static getKey(id, color) {
+        return `${id}-${color}`;
     }
 
-    static generateKey(keys) {
-    //new key is the sum of all keys + 1
-        if (localStorage.length > 0) {
-            const sum = (key1, key2) => Number(key1) + Number(key2);
-            return Number(keys.reduce(sum) + 1);
-        }
-        return 0;
-    }
-
-    static addQty(key, cartProduct) {
-        const storedQty = JSON.parse(localStorage.getItem(key)).qty;
-        const newQty = Number(storedQty) + Number(cartProduct.qty);
+    static updateCartProductWithNewQty(key, storedCartProduct, qtyToAdd) {
+        const storedQty = storedCartProduct.qty;
+        const newQty = Number(storedQty) + Number(qtyToAdd);
         const updatedCartProduct = CartProduct.createCartProduct({
             qty: newQty,
-            color: cartProduct.color,
-            product: cartProduct.product
+            color: storedCartProduct.color,
+            product: storedCartProduct.product
         })
-        localStorage.setItem(key, JSON.stringify(updatedCartProduct));
+        LocalstorageService.saveCartProduct(key, updatedCartProduct);
     }
 }
 
@@ -182,7 +161,7 @@ class ProductPage {
                     color: this.productHtmlService.getColor(),
                     product
                 })
-                LocalstorageService.saveToCart(cartProduct);
+                LocalstorageService.addProductToCart(cartProduct);
                 this.router.goToUrl("./cart.html");
             } catch(error) {
                 document.getElementById("errorMsg").innerHTML = error.message;
