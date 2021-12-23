@@ -24,12 +24,12 @@ class CartProduct {
     }
 }
 
-class HtmlService {
+class CartHtmlService {
     constructor (document) {
         this.document = document;
     }
     static addCartProductToHtml(product) {
-        return `<article class="cart__item" data-id="${product.id}">
+        return `<article class="cart__item" data-id="${product.id}-${product.color}">
                     <div class="cart__item__img">
                         <img src="${product.img.src}" alt="${product.img.alt}">
                     </div>
@@ -50,7 +50,7 @@ class HtmlService {
     }
 
     static setCartItem(product) {
-        const productHtml = HtmlService.addCartProductToHtml(product);
+        const productHtml = CartHtmlService.addCartProductToHtml(product);
         document.getElementById("cart__items").innerHTML += productHtml;
     }
 
@@ -58,17 +58,8 @@ class HtmlService {
         keys.forEach ( key => {
             const cartProduct = LocalstorageService.getCartProduct(key);
             const product = Product.createProduct(cartProduct);
-            HtmlService.setCartItem(product);
+            CartHtmlService.setCartItem(product);
         })
-    }
-
-    static editFormErrorMsg(validInput, formInputHtmlId) {
-        const formInputHtml = document.getElementById(`${formInputHtmlId.id}ErrorMsg`);
-        if (!validInput) {
-            formInputHtml.innerHTML = "Champ invalide."
-        } else {
-            formInputHtml.innerHTML = ""
-        }
     }
 
     setTotalQuantity(totalQuantity) {
@@ -88,8 +79,53 @@ class HtmlService {
         }
     }
 
-    displayOrderId(orderId) {
-        this.document.getElementById("orderId").innerHTML = orderId;
+    static sumReducer(array) {
+        const sum = (qty1, qty2) => (Number(qty1) + Number(qty2));
+        return array.reduce(sum, 0);
+    }
+
+    calculateTotalQty() {
+        // const keys = LocalstorageService.getKeysList();
+        // let totalQty = 0;
+        // keys.forEach( key => {
+        //     const qty = LocalstorageService.getProductQty(key);
+        //     totalQty += Number(qty);
+        // })
+        // return totalQty;
+        const qtyList = [];
+        const keys = LocalstorageService.getKeysList();
+        keys.forEach( key => {
+            const qty = LocalstorageService.getProductQty(key);
+            qtyList.push(qty);
+        })
+        return CartHtmlService.sumReducer(qtyList);;
+    }
+    
+    calculateTotalPrice() {
+        // const keys = LocalstorageService.getKeysList();
+        // let totalPrice = 0;
+        // keys.forEach( key => {
+        //     const price = LocalstorageService.getProductPrice(key);
+        //     const qty = LocalstorageService.getProductQty(key);
+        //     totalPrice += (Number(qty) * Number(price));
+        // })
+        // return totalPrice;
+        const priceList = [];
+        const keys = LocalstorageService.getKeysList();
+        keys.forEach( key => {
+            const qty = LocalstorageService.getProductQty(key);
+            const price = LocalstorageService.getProductPrice(key);
+            priceList.push(qty*price);
+        })
+        return CartHtmlService.sumReducer(priceList);;
+
+    }
+
+    updateTotalQtyAndPrice() {
+        const totalQuantity = this.calculateTotalQty();
+        this.setTotalQuantity(totalQuantity);
+        const totalPrice = this.calculateTotalPrice();
+        this.setTotalPrice(totalPrice);
     }
 }
 
@@ -145,21 +181,30 @@ class FormHandlerService {
         return /^[-'\s\p{L}\p{M}]+$/muig.test(string);
     }
 
+    static editFormErrorMsg(validInput, formInputHtmlId) {
+        const formInputHtml = document.getElementById(`${formInputHtmlId.id}ErrorMsg`);
+        if (!validInput) {
+            formInputHtml.innerHTML = "*Champ invalide.*"
+        } else {
+            formInputHtml.innerHTML = ""
+        }
+    }
+
     static testNameValidity(formInputHtmlId) {
         const validName = FormHandlerService.testName(formInputHtmlId.value);
-        HtmlService.editFormErrorMsg(validName, formInputHtmlId);
+        FormHandlerService.editFormErrorMsg(validName, formInputHtmlId);
         return validName;
     }
     
     static testAdressValidity(formInputHtmlId) {
         const validAddress = FormHandlerService.testAddress(formInputHtmlId.value);
-        HtmlService.editFormErrorMsg(validAddress, formInputHtmlId);
+        FormHandlerService.editFormErrorMsg(validAddress, formInputHtmlId);
         return validAddress;
     }
     
     static testEmailValidity(formInputHtmlId) {
         const validEmail = FormHandlerService.testEmail(formInputHtmlId.value);
-        HtmlService.editFormErrorMsg(validEmail, formInputHtmlId);
+        FormHandlerService.editFormErrorMsg(validEmail, formInputHtmlId);
         return validEmail;
     }
 
@@ -177,8 +222,8 @@ class FormHandlerService {
 
 
 class CartPage {
-    constructor( htmlService, formHandlerService, router ) {
-        this.htmlService = htmlService,
+    constructor( cartHtmlService, formHandlerService, router ) {
+        this.cartHtmlService = cartHtmlService,
         this.formHandlerService = formHandlerService,
         this.router = router
     }
@@ -191,39 +236,56 @@ class CartPage {
 
     setCartProducts() {
         const keys = LocalstorageService.getKeysList();
-        HtmlService.setCartItems(keys);
-        this.updateTotalQtyAndPrice();
+        CartHtmlService.setCartItems(keys);
+        this.cartHtmlService.updateTotalQtyAndPrice();
         this.setCartEventListeners();
     }
 
     setCartEventListeners() {
-        const cartPage = this;
-
-        const deleteItemButton = document.getElementsByClassName("deleteItem");
+        const deleteItemButtons = document.getElementsByClassName("deleteItem");
         const cartHtml = document.getElementById("cart__items");
-        //event listener to every delete buttons
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            deleteItemButton[i].addEventListener("click", function deleteItemOnClick(e) {
-                e.preventDefault();
-                //remove product from cart and localstorage
-                cartHtml.removeChild(this.closest("article"));
-                LocalstorageService.removeCartProduct(key);
-                cartPage.updateTotalQtyAndPrice();
-            });
-        }
+        // const cartPage = this;
+        // //event listener to every delete buttons
+        // for (let i = 0; i < localStorage.length; i++) {
+        //     const key = localStorage.key(i);
+        //     deleteItemButton[i].addEventListener("click", function deleteItemOnClick(e) {
+        //         e.preventDefault();
+        //         //remove product from cart and localstorage
+        //         cartHtml.removeChild(this.closest("article"));
+        //         LocalstorageService.removeCartProduct(key);
+        //         cartPage.updateTotalQtyAndPrice();
+        //     });
 
-        //event listener on quantity input change
-        const qtyInput = document.getElementsByClassName("itemQuantity");
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            qtyInput[i].addEventListener("change", function changeQty(e) {
+        Array.from(deleteItemButtons).forEach( deleteItemButton => {
+            deleteItemButton.addEventListener('click', e => {
                 e.preventDefault();
-                HtmlService.forceInputMinMaxValue(this);
-                LocalstorageService.updateCartProductQty(key, this.value);
-                cartPage.updateTotalQtyAndPrice();
-            });
-        }
+                const article = deleteItemButton.closest("article");
+                cartHtml.removeChild(article);
+                LocalstorageService.removeCartProduct(article.dataset.id);
+                this.cartHtmlService.updateTotalQtyAndPrice();
+            })
+        })
+
+        const qtyInputs = document.getElementsByClassName("itemQuantity");
+        // for (let i = 0; i < localStorage.length; i++) {
+        //     const key = localStorage.key(i);
+        //     qtyInput[i].addEventListener("change", function changeQty(e) {
+        //         e.preventDefault();
+        //         HtmlService.forceInputMinMaxValue(this);
+        //         LocalstorageService.updateCartProductQty(key, this.value);
+        //         cartPage.updateTotalQtyAndPrice();
+        //     });
+        // }
+
+        Array.from(qtyInputs).forEach( qtyInput => {
+            qtyInput.addEventListener('change', e => {
+                e.preventDefault();
+                const article = qtyInput.closest("article");
+                CartHtmlService.forceInputMinMaxValue(qtyInput.value);
+                LocalstorageService.updateCartProductQty(article.dataset.id, qtyInput.value);
+                this.cartHtmlService.updateTotalQtyAndPrice();
+            })
+        })
     }
 
     setFormValidation() {
@@ -250,10 +312,10 @@ class CartPage {
     }
 
     setOrderButtonClick() {
-        const sendOrderOnClick = async (e) => {
+        const orderButton = document.getElementById("order");
+        orderButton.addEventListener('click', async (e) => {
             e.preventDefault();
             const formIsValid = this.formHandlerService.testFormValidity();
-            
             if (formIsValid) {
                 const contact = {
                     firstName: document.getElementById("firstName").value,
@@ -269,50 +331,21 @@ class CartPage {
                     const orderId = orderResponse.orderId;
                     this.router.goToUrl(`./confirmation.html?orderId=${orderId}`);
                 } catch(error) {
-                    console.log(error)
+                    document.getElementById(`emailErrorMsg`).innerHTML = error.message;
                 }
             }
-        }
-        document.getElementById("order").addEventListener('click', sendOrderOnClick)
+        })
     }
 
-    calculateTotalQty() {
-        const keys = LocalstorageService.getKeysList();
-        let totalQty = 0;
-        keys.forEach( key => {
-            const qty = LocalstorageService.getProductQty(key);
-            totalQty += Number(qty);
-        })
-        return totalQty;
-    }
-    
-    calculateTotalPrice() {
-        const keys = LocalstorageService.getKeysList();
-        let totalPrice = 0;
-        keys.forEach( key => {
-            const price = LocalstorageService.getProductPrice(key);
-            const qty = LocalstorageService.getProductQty(key);
-            totalPrice += (Number(qty) * Number(price));
-        })
-        return totalPrice;
-    }
-
-    updateTotalQtyAndPrice() {
-        const totalQuantity = this.calculateTotalQty();
-        this.htmlService.setTotalQuantity(totalQuantity);
-        const totalPrice = this.calculateTotalPrice();
-        this.htmlService.setTotalPrice(totalPrice);
-    }
-    
     createIdList() {
-        let idList = [];
+        const idList = [];
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
             const product = LocalstorageService.getCartProduct(key);
             idList.push(product.product.id);
         }
         if (idList.length == 0) {
-            throw new Error("Panier vide")
+            throw new Error("*Votre panier est vide*")
         }
         return idList;
     }
@@ -336,13 +369,16 @@ class CartPage {
 
 
 class ConfirmationPage {
-    constructor( htmlService, router ) {
-        this.htmlService = htmlService,
+    constructor( router ) {
         this.router = router
     }
 
     renderHtml() {
         const orderId = this.router.getParamFromUrl("orderId");
-        this.htmlService.displayOrderId(orderId);
+        this.displayOrderId(orderId);
+    }
+
+    displayOrderId(orderId) {
+        document.getElementById("orderId").innerHTML = orderId;
     }
 }
