@@ -117,7 +117,7 @@ class CartHtmlService {
             const price = LocalstorageService.getProductPrice(key);
             priceList.push(qty*price);
         })
-        return CartHtmlService.sumReducer(priceList);;
+        return CartHtmlService.sumReducer(priceList);
 
     }
 
@@ -338,16 +338,23 @@ class CartPage {
     }
 
     createIdList() {
-        const idList = [];
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            const product = LocalstorageService.getCartProduct(key);
-            idList.push(product.product.id);
-        }
-        if (idList.length == 0) {
+        // const idList = [];
+        // for (let i = 0; i < localStorage.length; i++) {
+        //     const key = localStorage.key(i);
+        //     const product = LocalstorageService.getCartProduct(key);
+        //     idList.push(product.product.id);
+        // }
+        const keys = LocalstorageService.getKeysList();
+        if (keys.length > 0) {
+            const idList = [];
+            keys.forEach( key => {
+                const cartProduct = LocalstorageService.getCartProduct(key);
+                idList.push(cartProduct.product.id);
+            })
+            return idList;
+        } else {
             throw new Error("*Votre panier est vide*")
         }
-        return idList;
     }
     
     async postOrder(order) {
