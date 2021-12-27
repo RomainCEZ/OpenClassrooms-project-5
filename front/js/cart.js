@@ -49,25 +49,28 @@ class CartHtmlService {
                 </article>`
     }
 
-    static setCartItem(product) {
+    static setCartProduct(product) {
         const productHtml = CartHtmlService.addCartProductToHtml(product);
         document.getElementById("cart__items").innerHTML += productHtml;
     }
 
-    static setCartItems(keys) {
-        keys.forEach ( key => {
-            const cartProduct = LocalstorageService.getCartProduct(key);
+    static setCartProducts(cartProductsList) {
+        cartProductsList.forEach( cartProduct => {
             const product = Product.createProduct(cartProduct);
-            CartHtmlService.setCartItem(product);
+            CartHtmlService.setCartProduct(product);
         })
     }
 
-    setTotalQuantity(totalQuantity) {
-        this.document.getElementById("totalQuantity").innerHTML = totalQuantity;
-    }
+    // setTotalQuantity(totalQuantity) {
+    //     this.document.getElementById("totalQuantity").innerHTML = totalQuantity;
+    // }
 
-    setTotalPrice(totalPrice) {
-        this.document.getElementById("totalPrice").innerHTML = totalPrice;
+    // setTotalPrice(totalPrice) {
+    //     this.document.getElementById("totalPrice").innerHTML = totalPrice;
+    // }
+
+    insertParamValueIntoHtml(paramId, value) {
+        this.document.getElementById(paramId).innerHTML = value;
     }
 
     static forceInputMinMaxValue(inputQuerySelector) {
@@ -84,7 +87,7 @@ class CartHtmlService {
         return array.reduce(sum, 0);
     }
 
-    calculateTotalQty() {
+    calculateTotalQty(productsList) {
         // const keys = LocalstorageService.getKeysList();
         // let totalQty = 0;
         // keys.forEach( key => {
@@ -92,16 +95,25 @@ class CartHtmlService {
         //     totalQty += Number(qty);
         // })
         // return totalQty;
-        const qtyList = [];
-        const keys = LocalstorageService.getKeysList();
-        keys.forEach( key => {
-            const qty = LocalstorageService.getProductQty(key);
-            qtyList.push(qty);
-        })
-        return CartHtmlService.sumReducer(qtyList);;
+        
+        // const qtyList = [];
+        // const keys = LocalstorageService.getKeysList();
+        // keys.forEach( key => {
+        //     const qty = LocalstorageService.getProductQty(key);
+        //     qtyList.push(qty);
+        // })
+
+        // const qtyList = [];
+        // const cartProductsList = Object.values(localStorage)
+        // cartProductsList.forEach( cartProduct => {
+        //     qtyList.push(JSON.parse(cartProduct).qty);
+        // })
+
+        const qtyList = productsList.map( product => product.qty)
+        return CartHtmlService.sumReducer(qtyList);
     }
     
-    calculateTotalPrice() {
+    calculateTotalPrice(productsList) {
         // const keys = LocalstorageService.getKeysList();
         // let totalPrice = 0;
         // keys.forEach( key => {
@@ -110,22 +122,26 @@ class CartHtmlService {
         //     totalPrice += (Number(qty) * Number(price));
         // })
         // return totalPrice;
-        const priceList = [];
-        const keys = LocalstorageService.getKeysList();
-        keys.forEach( key => {
-            const qty = LocalstorageService.getProductQty(key);
-            const price = LocalstorageService.getProductPrice(key);
-            priceList.push(qty*price);
-        })
-        return CartHtmlService.sumReducer(priceList);
 
+        // const priceList = [];
+        // const keys = LocalstorageService.getKeysList();
+        // keys.forEach( key => {
+        //     const qty = LocalstorageService.getProductQty(key);
+        //     const price = LocalstorageService.getProductPrice(key);
+        //     priceList.push(qty*price);
+        // })
+        // return CartHtmlService.sumReducer(priceList);
+
+        const priceList = productsList.map( cartProduct => cartProduct.product.price * cartProduct.qty);
+        return CartHtmlService.sumReducer(priceList);
     }
 
     updateTotalQtyAndPrice() {
-        const totalQuantity = this.calculateTotalQty();
-        this.setTotalQuantity(totalQuantity);
-        const totalPrice = this.calculateTotalPrice();
-        this.setTotalPrice(totalPrice);
+        const productsList = LocalstorageService.getCartProductsArray();
+        const totalQuantity = this.calculateTotalQty(productsList);
+        this.insertParamValueIntoHtml("totalQuantity", totalQuantity);
+        const totalPrice = this.calculateTotalPrice(productsList);
+        this.insertParamValueIntoHtml("totalPrice", totalPrice);
     }
 }
 
@@ -140,6 +156,11 @@ class LocalstorageService {
 
     static removeCartProduct(key) {
         localStorage.removeItem(key);
+    }
+
+    static getCartProductsArray() {
+        const cartProductsList = Object.values(localStorage);
+        return cartProductsList.map( cartProduct => JSON.parse(cartProduct));
     }
 
     static updateCartProductQty(key, newQty) {
@@ -229,19 +250,25 @@ class CartPage {
     }
 
     renderHtml() {
-        this.setCartProducts();
+        this.setCart();
         this.setFormValidation();
         this.setOrderButtonClick();
     }
 
-    setCartProducts() {
-        const keys = LocalstorageService.getKeysList();
-        CartHtmlService.setCartItems(keys);
+    setCart() {
+        // const keys = LocalstorageService.getKeysList();
+        const cartProductsList = LocalstorageService.getCartProductsArray();
+        CartHtmlService.setCartProducts(cartProductsList);
         this.cartHtmlService.updateTotalQtyAndPrice();
         this.setCartEventListeners();
     }
 
     setCartEventListeners() {
+        this.setDeleteItemButtonEventListener();
+        this.setQtyInputEventListener();
+    }
+
+    setDeleteItemButtonEventListener() {
         const deleteItemButtons = document.getElementsByClassName("deleteItem");
         const cartHtml = document.getElementById("cart__items");
         // const cartPage = this;
@@ -265,7 +292,9 @@ class CartPage {
                 this.cartHtmlService.updateTotalQtyAndPrice();
             })
         })
+    }
 
+    setQtyInputEventListener() {
         const qtyInputs = document.getElementsByClassName("itemQuantity");
         // for (let i = 0; i < localStorage.length; i++) {
         //     const key = localStorage.key(i);
@@ -276,7 +305,6 @@ class CartPage {
         //         cartPage.updateTotalQtyAndPrice();
         //     });
         // }
-
         Array.from(qtyInputs).forEach( qtyInput => {
             qtyInput.addEventListener('change', e => {
                 e.preventDefault();
@@ -325,7 +353,8 @@ class CartPage {
                     email: document.getElementById("email").value
                 }
                 try {
-                    const products = this.createIdList();
+                    const cartProductsList = LocalstorageService.getCartProductsArray();
+                    const products = this.createIdList(cartProductsList);
                     const order = {contact, products};
                     const orderResponse = await this.postOrder(order);
                     const orderId = orderResponse.orderId;
@@ -337,24 +366,30 @@ class CartPage {
         })
     }
 
-    createIdList() {
+    createIdList(cartProductsList) {
         // const idList = [];
         // for (let i = 0; i < localStorage.length; i++) {
         //     const key = localStorage.key(i);
         //     const product = LocalstorageService.getCartProduct(key);
         //     idList.push(product.product.id);
         // }
-        const keys = LocalstorageService.getKeysList();
-        if (keys.length > 0) {
-            const idList = [];
-            keys.forEach( key => {
-                const cartProduct = LocalstorageService.getCartProduct(key);
-                idList.push(cartProduct.product.id);
-            })
-            return idList;
-        } else {
+
+        // const keys = LocalstorageService.getKeysList();
+        // if (keys.length > 0) {
+        //     const idList = [];
+        //     keys.forEach( key => {
+        //         const cartProduct = LocalstorageService.getCartProduct(key);
+        //         idList.push(cartProduct.product.id);
+        //     })
+        //     return idList;
+
+        if (cartProductsList.length == 0) {
             throw new Error("*Votre panier est vide*")
+        } else {
+            return cartProductsList.map( cartProduct => cartProduct.product.id);
         }
+
+        // return cartProductsList.length == 0 ? () => { throw new Error("*Votre panier est vide*") } : cartProductsList.map( cartProduct => cartProduct.product.id);
     }
     
     async postOrder(order) {
