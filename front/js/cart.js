@@ -61,14 +61,6 @@ class CartHtmlService {
         })
     }
 
-    // setTotalQuantity(totalQuantity) {
-    //     this.document.getElementById("totalQuantity").innerHTML = totalQuantity;
-    // }
-
-    // setTotalPrice(totalPrice) {
-    //     this.document.getElementById("totalPrice").innerHTML = totalPrice;
-    // }
-
     insertParamValueIntoHtml(paramId, value) {
         this.document.getElementById(paramId).innerHTML = value;
     }
@@ -88,50 +80,11 @@ class CartHtmlService {
     }
 
     calculateTotalQty(productsList) {
-        // const keys = LocalstorageService.getKeysList();
-        // let totalQty = 0;
-        // keys.forEach( key => {
-        //     const qty = LocalstorageService.getProductQty(key);
-        //     totalQty += Number(qty);
-        // })
-        // return totalQty;
-        
-        // const qtyList = [];
-        // const keys = LocalstorageService.getKeysList();
-        // keys.forEach( key => {
-        //     const qty = LocalstorageService.getProductQty(key);
-        //     qtyList.push(qty);
-        // })
-
-        // const qtyList = [];
-        // const cartProductsList = Object.values(localStorage)
-        // cartProductsList.forEach( cartProduct => {
-        //     qtyList.push(JSON.parse(cartProduct).qty);
-        // })
-
         const qtyList = productsList.map( product => product.qty)
         return CartHtmlService.sumReducer(qtyList);
     }
     
     calculateTotalPrice(productsList) {
-        // const keys = LocalstorageService.getKeysList();
-        // let totalPrice = 0;
-        // keys.forEach( key => {
-        //     const price = LocalstorageService.getProductPrice(key);
-        //     const qty = LocalstorageService.getProductQty(key);
-        //     totalPrice += (Number(qty) * Number(price));
-        // })
-        // return totalPrice;
-
-        // const priceList = [];
-        // const keys = LocalstorageService.getKeysList();
-        // keys.forEach( key => {
-        //     const qty = LocalstorageService.getProductQty(key);
-        //     const price = LocalstorageService.getProductPrice(key);
-        //     priceList.push(qty*price);
-        // })
-        // return CartHtmlService.sumReducer(priceList);
-
         const priceList = productsList.map( cartProduct => cartProduct.product.price * cartProduct.qty);
         return CartHtmlService.sumReducer(priceList);
     }
@@ -256,7 +209,6 @@ class CartPage {
     }
 
     setCart() {
-        // const keys = LocalstorageService.getKeysList();
         const cartProductsList = LocalstorageService.getCartProductsArray();
         CartHtmlService.setCartProducts(cartProductsList);
         this.cartHtmlService.updateTotalQtyAndPrice();
@@ -271,17 +223,6 @@ class CartPage {
     setDeleteItemButtonEventListener() {
         const deleteItemButtons = document.getElementsByClassName("deleteItem");
         const cartHtml = document.getElementById("cart__items");
-        // const cartPage = this;
-        // //event listener to every delete buttons
-        // for (let i = 0; i < localStorage.length; i++) {
-        //     const key = localStorage.key(i);
-        //     deleteItemButton[i].addEventListener("click", function deleteItemOnClick(e) {
-        //         e.preventDefault();
-        //         //remove product from cart and localstorage
-        //         cartHtml.removeChild(this.closest("article"));
-        //         LocalstorageService.removeCartProduct(key);
-        //         cartPage.updateTotalQtyAndPrice();
-        //     });
 
         Array.from(deleteItemButtons).forEach( deleteItemButton => {
             deleteItemButton.addEventListener('click', e => {
@@ -296,15 +237,7 @@ class CartPage {
 
     setQtyInputEventListener() {
         const qtyInputs = document.getElementsByClassName("itemQuantity");
-        // for (let i = 0; i < localStorage.length; i++) {
-        //     const key = localStorage.key(i);
-        //     qtyInput[i].addEventListener("change", function changeQty(e) {
-        //         e.preventDefault();
-        //         HtmlService.forceInputMinMaxValue(this);
-        //         LocalstorageService.updateCartProductQty(key, this.value);
-        //         cartPage.updateTotalQtyAndPrice();
-        //     });
-        // }
+
         Array.from(qtyInputs).forEach( qtyInput => {
             qtyInput.addEventListener('change', e => {
                 e.preventDefault();
@@ -352,44 +285,20 @@ class CartPage {
                     city: document.getElementById("city").value,
                     email: document.getElementById("email").value
                 }
-                try {
-                    const cartProductsList = LocalstorageService.getCartProductsArray();
+                const cartProductsList = LocalstorageService.getCartProductsArray();
+                if (cartProductsList.length > 0) {
                     const products = this.createIdList(cartProductsList);
                     const order = {contact, products};
                     const orderResponse = await this.postOrder(order);
                     const orderId = orderResponse.orderId;
                     this.router.goToUrl(`./confirmation.html?orderId=${orderId}`);
-                } catch(error) {
-                    document.getElementById(`emailErrorMsg`).innerHTML = error.message;
                 }
             }
         })
     }
 
     createIdList(cartProductsList) {
-        // const idList = [];
-        // for (let i = 0; i < localStorage.length; i++) {
-        //     const key = localStorage.key(i);
-        //     const product = LocalstorageService.getCartProduct(key);
-        //     idList.push(product.product.id);
-        // }
-
-        // const keys = LocalstorageService.getKeysList();
-        // if (keys.length > 0) {
-        //     const idList = [];
-        //     keys.forEach( key => {
-        //         const cartProduct = LocalstorageService.getCartProduct(key);
-        //         idList.push(cartProduct.product.id);
-        //     })
-        //     return idList;
-
-        if (cartProductsList.length == 0) {
-            throw new Error("*Votre panier est vide*")
-        } else {
-            return cartProductsList.map( cartProduct => cartProduct.product.id);
-        }
-
-        // return cartProductsList.length == 0 ? () => { throw new Error("*Votre panier est vide*") } : cartProductsList.map( cartProduct => cartProduct.product.id);
+        return cartProductsList.map( cartProduct => cartProduct.product.id);
     }
     
     async postOrder(order) {
