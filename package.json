@@ -1,0 +1,26 @@
+{
+  "name": "p5-dev-web-kanap",
+  "version": "1.0.0",
+  "description": "This is the front end and back end server for Project 5 of the Web Developer path.",
+  "main": "server.js",
+  "dependencies": {
+    "concurrently": "^6.5.1"
+  },
+  "devDependencies": {
+    "eslint": "^8.5.0",
+    "live-server": "^1.2.1"
+  },
+  "scripts": {
+    "dev": "concurrently \"node node_modules/live-server/live-server --port=8080 --open=front/html\" \"node back/server \""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RomainCEZ/OpenClassrooms-project-5.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/RomainCEZ/OpenClassrooms-project-5/issues"
+  },
+  "homepage": "https://github.com/RomainCEZ/OpenClassrooms-project-5#readme"
+}
