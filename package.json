@@ -3,15 +3,17 @@
   "version": "1.0.0",
   "description": "This is the front end and back end server for Project 5 of the Web Developer path.",
   "main": "server.js",
-  "dependencies": {
-    "concurrently": "^6.5.1"
-  },
   "devDependencies": {
+    "@types/jest": "^27.4.0",
+    "concurrently": "^6.5.1",
     "eslint": "^8.5.0",
-    "live-server": "^1.2.1"
+    "jest": "^27.4.5",
+    "live-server": "^1.2.1",
+    "rewire": "^6.0.0"
   },
   "scripts": {
-    "dev": "concurrently \"node node_modules/live-server/live-server --port=8080 --open=front/html\" \"node back/server \""
+    "dev": "concurrently \"node node_modules/live-server/live-server --port=8080 --open=front/html\" \"node back/server \"",
+    "test": "jest"
   },
   "repository": {
     "type": "git",
