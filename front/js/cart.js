@@ -1,12 +1,15 @@
 class Product {
     constructor ({ color, qty, product }) {
-        this.color = color,
-        this.qty = qty
-        this.id = product.id,
-        this.img = product.img,
-        this.name = product.name,
-        this.description = product.description,
-        this.price = product.price
+        this.color = color;
+        this.qty = qty;
+        this.id = product._id;
+        this.img = {
+            src: product.imageUrl,
+            alt: product.altTxt
+        };
+        this.name = product.name;
+        this.description = product.description;
+        this.price = product.price;
     }
     static createProduct({ color, qty, product }) { 
         return new Product({ color, qty, product });
@@ -14,13 +17,13 @@ class Product {
 }
 
 class CartProduct {
-    constructor ({ qty, color, product}) {
+    constructor ({ qty, color, id}) {
         this.qty = qty,
         this.color = color,
-        this.product = product
+        this.id = id
     }
-    static createCartProduct({ qty, color, product}) {
-        return new CartProduct({ qty, color, product});
+    static createCartProduct({ qty, color, id}) {
+        return new CartProduct({ qty, color, id});
     }
 }
 
@@ -49,16 +52,11 @@ class CartHtmlService {
                 </article>`
     }
 
-    static setCartProduct(product) {
-        const productHtml = CartHtmlService.addCartProductToHtml(product);
-        document.getElementById("cart__items").innerHTML += productHtml;
-    }
-
-    static setCartProducts(cartProductsList) {
-        cartProductsList.forEach( cartProduct => {
-            const product = Product.createProduct(cartProduct);
-            CartHtmlService.setCartProduct(product);
-        })
+    setCartProducts(productsList) {
+        productsList.forEach( product => {
+            const productHtml = CartHtmlService.addCartProductToHtml(product);
+            document.getElementById("cart__items").innerHTML += productHtml;
+        });
     }
 
     insertParamValueIntoHtml(paramId, value) {
@@ -79,18 +77,23 @@ class CartHtmlService {
         return array.reduce(sum, 0);
     }
 
-    calculateTotalQty(productsList) {
-        const qtyList = productsList.map( product => product.qty)
+    calculateTotalQty() {
+        const cartProductsList = LocalstorageService.getCartProductsArray();
+        const qtyList = cartProductsList.map( product => product.qty)
         return CartHtmlService.sumReducer(qtyList);
     }
     
     calculateTotalPrice(productsList) {
-        const priceList = productsList.map( cartProduct => cartProduct.product.price * cartProduct.qty);
+        const cartProductsList = LocalstorageService.getCartProductsArray();
+        const priceList = []
+        cartProductsList.forEach( cartProduct => {
+            const price = productsList.find( product => product.id === cartProduct.id).price;
+            priceList.push(cartProduct.qty * price);
+        });
         return CartHtmlService.sumReducer(priceList);
     }
 
-    updateTotalQtyAndPrice() {
-        const productsList = LocalstorageService.getCartProductsArray();
+    updateTotalQtyAndPrice(productsList) {
         const totalQuantity = this.calculateTotalQty(productsList);
         this.insertParamValueIntoHtml("totalQuantity", totalQuantity);
         const totalPrice = this.calculateTotalPrice(productsList);
@@ -121,7 +124,7 @@ class LocalstorageService {
         const updatedCartProduct = CartProduct.createCartProduct({
             qty: newQty,
             color: cartProduct.color,
-            product: cartProduct.product
+            id: cartProduct.id
         })
         LocalstorageService.saveCartProduct(key, updatedCartProduct);
     }
@@ -135,23 +138,18 @@ class LocalstorageService {
         const price = JSON.parse(localStorage.getItem(key)).product.price;
         return price;
     }
-
-    static getKeysList() {
-        const keys = Object.keys(localStorage);
-        return keys
-    }
 }
 
 class FormHandlerService {
-    static testEmail(string) {
+    static testEmailRegEx(string) {
         return /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/i.test(string);
     }
     
-    static testAddress(string) {
+    static testAddressRegEx(string) {
         return /^[0-9-'\s\p{L}\p{M}]+$/muig.test(string);
     }
     
-    static testName(string) {
+    static testNameRegEx(string) {
         return /^[-'\s\p{L}\p{M}]+$/muig.test(string);
     }
 
@@ -165,29 +163,34 @@ class FormHandlerService {
     }
 
     static testNameValidity(formInputHtmlId) {
-        const validName = FormHandlerService.testName(formInputHtmlId.value);
+        const validName = FormHandlerService.testNameRegEx(formInputHtmlId.value);
         FormHandlerService.editFormErrorMsg(validName, formInputHtmlId);
         return validName;
     }
     
     static testAdressValidity(formInputHtmlId) {
-        const validAddress = FormHandlerService.testAddress(formInputHtmlId.value);
+        const validAddress = FormHandlerService.testAddressRegEx(formInputHtmlId.value);
         FormHandlerService.editFormErrorMsg(validAddress, formInputHtmlId);
         return validAddress;
     }
     
     static testEmailValidity(formInputHtmlId) {
-        const validEmail = FormHandlerService.testEmail(formInputHtmlId.value);
+        const validEmail = FormHandlerService.testEmailRegEx(formInputHtmlId.value);
         FormHandlerService.editFormErrorMsg(validEmail, formInputHtmlId);
         return validEmail;
     }
 
     testFormValidity() {
-        const validFirstName = FormHandlerService.testNameValidity(firstName);
-        const validLastName = FormHandlerService.testNameValidity(lastName);
-        const validAddress = FormHandlerService.testAdressValidity(address);
-        const validCity = FormHandlerService.testAdressValidity(city);
-        const validEmail = FormHandlerService.testEmailValidity(email);
+        const firstNameInputHtml = document.getElementById("firstName");
+        const validFirstName = FormHandlerService.testNameValidity(firstNameInputHtml);
+        const lastNameInputHtml = document.getElementById("lastName");
+        const validLastName = FormHandlerService.testNameValidity(lastNameInputHtml);
+        const addressInputHtml = document.getElementById("address");
+        const validAddress = FormHandlerService.testAdressValidity(addressInputHtml);
+        const cityInputHtml = document.getElementById("city");
+        const validCity = FormHandlerService.testAdressValidity(cityInputHtml);
+        const emailInputHtml = document.getElementById("email");
+        const validEmail = FormHandlerService.testEmailValidity(emailInputHtml);
         if (validFirstName && validLastName && validAddress && validCity && validEmail) {
             return true;
         }
@@ -195,32 +198,46 @@ class FormHandlerService {
 }
 
 
+// eslint-disable-next-line no-unused-vars
 class CartPage {
-    constructor( cartHtmlService, formHandlerService, router ) {
-        this.cartHtmlService = cartHtmlService,
-        this.formHandlerService = formHandlerService,
-        this.router = router
+    constructor( cartHtmlService, formHandlerService, productProvider, router ) {
+        this.cartHtmlService = cartHtmlService;
+        this.formHandlerService = formHandlerService;
+        this.productProvider = productProvider;
+        this.router = router;
     }
 
-    renderHtml() {
-        this.setCart();
+    async renderHtml() {
+        await this.setCart();
         this.setFormValidation();
         this.setOrderButtonClick();
     }
 
-    setCart() {
+    async setCart() {
+        const catalog = await this.productProvider.getAllProducts();
         const cartProductsList = LocalstorageService.getCartProductsArray();
-        CartHtmlService.setCartProducts(cartProductsList);
-        this.cartHtmlService.updateTotalQtyAndPrice();
-        this.setCartEventListeners();
+        const productsList = this.createProductsList(catalog, cartProductsList);
+        this.cartHtmlService.setCartProducts(productsList);
+        this.cartHtmlService.updateTotalQtyAndPrice(productsList);
+        this.setCartEventListeners(productsList);
     }
 
-    setCartEventListeners() {
-        this.setDeleteItemButtonEventListener();
-        this.setQtyInputEventListener();
+    createProductsList(catalog, cartProductsList) {
+        const productsList = [];
+        cartProductsList.forEach( cartProduct => {
+            const catalogProduct = catalog.find( product => product._id === cartProduct.id);
+            const product = new Product({ color: cartProduct.color, qty: cartProduct.qty, product: catalogProduct });
+            productsList.push(product);
+        });
+        return productsList;
     }
 
-    setDeleteItemButtonEventListener() {
+    setCartEventListeners(productsList) {
+        this.setDeleteItemButtonEventListener(productsList);
+        this.setQtyInputEventListener(productsList);
+    }
+
+    setDeleteItemButtonEventListener(productsList) {
         const deleteItemButtons = document.getElementsByClassName("deleteItem");
         const cartHtml = document.getElementById("cart__items");
 
@@ -230,21 +247,21 @@ class CartPage {
                 const article = deleteItemButton.closest("article");
                 cartHtml.removeChild(article);
                 LocalstorageService.removeCartProduct(article.dataset.id);
-                this.cartHtmlService.updateTotalQtyAndPrice();
+                this.cartHtmlService.updateTotalQtyAndPrice(productsList);
             })
         })
     }
 
-    setQtyInputEventListener() {
+    setQtyInputEventListener(productsList) {
         const qtyInputs = document.getElementsByClassName("itemQuantity");
 
         Array.from(qtyInputs).forEach( qtyInput => {
             qtyInput.addEventListener('change', e => {
                 e.preventDefault();
                 const article = qtyInput.closest("article");
-                CartHtmlService.forceInputMinMaxValue(qtyInput.value);
+                CartHtmlService.forceInputMinMaxValue(qtyInput);
                 LocalstorageService.updateCartProductQty(article.dataset.id, qtyInput.value);
-                this.cartHtmlService.updateTotalQtyAndPrice();
+                this.cartHtmlService.updateTotalQtyAndPrice(productsList);
             })
         })
     }
@@ -298,7 +315,7 @@ class CartPage {
     }
 
     createIdList(cartProductsList) {
-        return cartProductsList.map( cartProduct => cartProduct.product.id);
+        return cartProductsList.map( cartProduct => cartProduct.id);
     }
     
     async postOrder(order) {
@@ -319,6 +336,7 @@ class CartPage {
 }
 
 
+// eslint-disable-next-line no-unused-vars
 class ConfirmationPage {
     constructor( router ) {
         this.router = router
