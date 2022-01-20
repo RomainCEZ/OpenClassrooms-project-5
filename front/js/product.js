@@ -13,14 +13,14 @@ class Product {
 }
 
 class CartProduct {
-    constructor ({ qty, color, product}) {
+    constructor ({ qty, color, id}) {
         this.qty = qty,
         this.color = color,
-        this.product = product
+        this.id = id
     }
-    static createCartProduct({ qty, color, product}) {
+    static createCartProduct({ qty, color, id}) {
         CartProduct.checkParameters(qty, color);
-        return new CartProduct({ qty, color, product});
+        return new CartProduct({ qty, color, id});
     }
 
     static checkParameters(qty, color) {
@@ -33,6 +33,7 @@ class CartProduct {
     }
 }
 
+// eslint-disable-next-line no-unused-vars
 class ProductHtmlService {
     constructor (document) {
         this.document = document;
@@ -89,7 +90,7 @@ class LocalstorageService {
     }
     
     static addProductToCart(cartProduct) {
-        const id = cartProduct.product.id;
+        const id = cartProduct.id;
         const color = cartProduct.color;
         const key = LocalstorageService.getKey(id, color);
         const storedCartProduct = LocalstorageService.getCartProduct(key);
@@ -110,34 +111,15 @@ class LocalstorageService {
         const updatedCartProduct = CartProduct.createCartProduct({
             qty: newQty,
             color: storedCartProduct.color,
-            product: storedCartProduct.product
+            id: storedCartProduct.productId
         })
         LocalstorageService.saveCartProduct(key, updatedCartProduct);
     }
 }
 
-class ProductProvider {
-    async getProductById(id) {
-        try {
-            const res = await fetch(`http://localhost:3000/api/products/${id}`);
-            const product = await res.json();
-            return new Product({ 
-                id: product._id,
-                img: {
-                    src: product.imageUrl,
-                    alt: product.altTxt
-                }, 
-                name: product.name,
-                description: product.description,
-                colors: product.colors,
-                price: product.price 
-            });
-        } catch(err) {
-            console.log(err);
-        }
-    }
-}
 
+
+// eslint-disable-next-line no-unused-vars
 class ProductPage {
     constructor(productHtmlService, productProvider, router) {
         this.productHtmlService = productHtmlService;
@@ -159,7 +141,7 @@ class ProductPage {
                 const cartProduct = CartProduct.createCartProduct({
                     qty: this.productHtmlService.getQty(),
                     color: this.productHtmlService.getColor(),
-                    product
+                    id: product.id
                 })
                 LocalstorageService.addProductToCart(cartProduct);
                 this.router.goToUrl("./cart.html");
