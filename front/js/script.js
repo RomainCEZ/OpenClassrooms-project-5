@@ -20,25 +20,21 @@ class Product {
     }
 }
 
-async function getProductsFromApi() {
-    try {
-        const response = await fetch("http://localhost:3000/api/products");
-        const products = await response.json();
-        return products;
-    } catch(err) {
-        console.log(err);
+class IndexPage {
+    constructor(productProvider, router) {
+        this.productProvider = productProvider;
+        this.router = router;
     }
-}
 
-function insertProductsIntoHtml(products) {
-    const productsList = document.getElementById("items");
-    products.forEach( ({ _id, imageUrl, altTxt, name, description }) => {
-        const productHtml = new Product({ _id, imageUrl, altTxt, name, description }).insertProductIntoHtml;
-        productsList.innerHTML += productHtml;
-    })
-}
-
-async function fillProductsPage() {
-    const products = await getProductsFromApi();
-    insertProductsIntoHtml(products);
+    async renderHtml() {
+        const products = await this.productProvider.getAllProducts();
+        this.insertProductsIntoHtml(products);
+    }
+    insertProductsIntoHtml(products) {
+        const productsList = document.getElementById("items");
+        products.forEach( ({ _id, imageUrl, altTxt, name, description }) => {
+            const productHtml = new Product({ _id, imageUrl, altTxt, name, description }).insertProductIntoHtml;
+            productsList.innerHTML += productHtml;
+        })
+    }
 }
