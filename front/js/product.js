@@ -39,23 +39,31 @@ class ProductHtmlService {
         this.document = document;
     }
     addProductIntoPage(product) {
-        this.document.title = `${product.name}`;
+        this.document.title = product.name;
 
         this.document.getElementById("title")
-        .innerHTML = `${product.name}`;
+            .textContent = product.name;
 
-        this.document.querySelector(".item__img")
-        .innerHTML = `<img src="${product.img.src}" alt="${product.img.alt}">`;
+        const img = document.createElement("img");
+        img.src = product.img.src;
+        img.alt = product.img.alt;
+        this.document.querySelector(".item__img").appendChild(img);
+        
         document.getElementById("description")
-            .innerHTML = `${product.description}`;
+            .textContent = product.description;
 
         this.document.getElementById("price")
-        .innerHTML = `${product.price}`;
-
+            .textContent = product.price;
+        
+        const colors = this.document.getElementById("colors");
+        const colorFragment = new DocumentFragment();
         product.colors.forEach( color => {
-            this.document.getElementById("colors")
-                .innerHTML += `<option value="${color}">${color}</option>`;
+            const colorOption = document.createElement("option");
+            colorOption.value = color;
+            colorOption.textContent = color;
+            colorFragment.appendChild(colorOption);
         })
+        colors.appendChild(colorFragment);
     }
 
     getColor() {
@@ -146,7 +154,7 @@ class ProductPage {
                 LocalstorageService.addProductToCart(cartProduct);
                 this.router.goToUrl("./cart.html");
             } catch(error) {
-                document.getElementById("errorMsg").innerHTML = error.message;
+                document.getElementById("errorMsg").textContent = error.message;
             }
         }
         document.getElementById("addToCart").addEventListener("click", saveProductOnClick);

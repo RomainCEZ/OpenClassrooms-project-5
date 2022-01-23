@@ -32,35 +32,39 @@ class CartHtmlService {
         this.document = document;
     }
     static addCartProductToHtml(product) {
-        return `<article class="cart__item" data-id="${product.id}-${product.color}">
-                    <div class="cart__item__img">
-                        <img src="${product.img.src}" alt="${product.img.alt}">
-                    </div>
-                    <div class="cart__item__content">
-                        <div class="cart__item__content__titlePrice">
-                            <h2>${product.name} ( ${product.color} )</h2>
-                            <p>${product.price} €</p></div><div class="cart__item__content__settings">
-                            <div class="cart__item__content__settings__quantity">
-                                <p>Qté : </p>
-                                <input type="number" class="itemQuantity" name="itemQuantity" min="1" max="100" value="${product.qty}">
+        const article = document.createElement("article");
+        article.className = 'cart__item';
+        article.dataset.id = `${product.id}-${product.color}`;
+        article.innerHTML = `<div class="cart__item__img">
+                                <img src="${product.img.src}" alt="${product.img.alt}">
                             </div>
-                            <div class="cart__item__content__settings__delete">
-                                <p class="deleteItem">Supprimer</p>
-                            </div>
-                        </div>
-                    </div>
-                </article>`
+                            <div class="cart__item__content">
+                                <div class="cart__item__content__titlePrice">
+                                    <h2>${product.name} ( ${product.color} )</h2>
+                                    <p>${product.price} €</p></div><div class="cart__item__content__settings">
+                                    <div class="cart__item__content__settings__quantity">
+                                        <p>Qté : </p>
+                                        <input type="number" class="itemQuantity" name="itemQuantity" min="1" max="100" value="${product.qty}">
+                                    </div>
+                                    <div class="cart__item__content__settings__delete">
+                                        <p class="deleteItem">Supprimer</p>
+                                    </div>
+                                </div>
+                            </div>`;
+        return article;
     }
 
     setCartProducts(productsList) {
+        const cartFragment = new DocumentFragment();
         productsList.forEach( product => {
             const productHtml = CartHtmlService.addCartProductToHtml(product);
-            document.getElementById("cart__items").innerHTML += productHtml;
+            cartFragment.appendChild(productHtml);
         });
+        document.getElementById("cart__items").appendChild(cartFragment);
     }
 
     insertParamValueIntoHtml(paramId, value) {
-        this.document.getElementById(paramId).innerHTML = value;
+        this.document.getElementById(paramId).textContent = value;
     }
 
     static forceInputMinMaxValue(inputQuerySelector) {
@@ -156,9 +160,9 @@ class FormHandlerService {
     static editFormErrorMsg(validInput, formInputHtmlId) {
         const formInputHtml = document.getElementById(`${formInputHtmlId.id}ErrorMsg`);
         if (!validInput) {
-            formInputHtml.innerHTML = "*Champ invalide.*"
+            formInputHtml.textContent = "*Champ invalide.*"
         } else {
-            formInputHtml.innerHTML = ""
+            formInputHtml.textContent = ""
         }
     }
 
@@ -348,6 +352,6 @@ class ConfirmationPage {
     }
 
     displayOrderId(orderId) {
-        document.getElementById("orderId").innerHTML = orderId;
+        document.getElementById("orderId").textContent = orderId;
     }
 }

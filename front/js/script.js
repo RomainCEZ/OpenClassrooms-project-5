@@ -9,14 +9,15 @@ class Product {
         this.description = description
     }
 
-    get insertProductIntoHtml() {
-        return `<a href="./product.html?id=${this.id}">
-                    <article>
-                        <img src=${this.img.src} alt=${this.img.alt}/>
-                        <h3 class="productName">${this.name}</h3>
-                        <p class="productDescription">${this.description}</p>
-                    </article>
-                </a>`;
+    get createHtmlElement() {
+        const a = document.createElement('a');
+        a.href = `./product.html?id=${this.id}`;
+        a.innerHTML =  `<article>
+                            <img src=${this.img.src} alt=${this.img.alt}/>
+                            <h3 class="productName">${this.name}</h3>
+                            <p class="productDescription">${this.description}</p>
+                        </article>`;
+        return a;
     }
 }
 
@@ -31,10 +32,12 @@ class IndexPage {
         this.insertProductsIntoHtml(products);
     }
     insertProductsIntoHtml(products) {
-        const productsList = document.getElementById("items");
+        const productsList = document.querySelector("#items");
+        const fragment = new DocumentFragment();
         products.forEach( ({ _id, imageUrl, altTxt, name, description }) => {
-            const productHtml = new Product({ _id, imageUrl, altTxt, name, description }).insertProductIntoHtml;
-            productsList.innerHTML += productHtml;
+            const productHtml = new Product({ _id, imageUrl, altTxt, name, description }).createHtmlElement;
+            fragment.appendChild(productHtml);
         })
+        productsList.appendChild(fragment);
     }
 }
