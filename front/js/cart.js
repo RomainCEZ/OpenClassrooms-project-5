@@ -31,7 +31,7 @@ class CartHtmlService {
     constructor (document) {
         this.document = document;
     }
-    static addCartProductToHtml(product) {
+    addCartProductToHtml(product) {
         const article = document.createElement("article");
         article.className = 'cart__item';
         article.dataset.id = `${product.id}-${product.color}`;
@@ -57,7 +57,7 @@ class CartHtmlService {
     setCartProducts(productsList) {
         const cartFragment = new DocumentFragment();
         productsList.forEach( product => {
-            const productHtml = CartHtmlService.addCartProductToHtml(product);
+            const productHtml = this.addCartProductToHtml(product);
             cartFragment.appendChild(productHtml);
         });
         document.getElementById("cart__items").appendChild(cartFragment);
@@ -67,7 +67,7 @@ class CartHtmlService {
         this.document.getElementById(paramId).textContent = value;
     }
 
-    static forceInputMinMaxValue(inputQuerySelector) {
+    forceInputMinMaxValue(inputQuerySelector) {
         if (inputQuerySelector.value < 1) {
             inputQuerySelector.value = 1;
         }
@@ -76,7 +76,7 @@ class CartHtmlService {
         }
     }
 
-    static sumReducer(array) {
+    sumReducer(array) {
         const sum = (qty1, qty2) => (Number(qty1) + Number(qty2));
         return array.reduce(sum, 0);
     }
@@ -84,7 +84,7 @@ class CartHtmlService {
     calculateTotalQty() {
         const cartProductsList = LocalstorageService.getCartProductsArray();
         const qtyList = cartProductsList.map( product => product.qty)
-        return CartHtmlService.sumReducer(qtyList);
+        return this.sumReducer(qtyList);
     }
     
     calculateTotalPrice(productsList) {
@@ -94,7 +94,7 @@ class CartHtmlService {
             const price = productsList.find( product => product.id === cartProduct.id).price;
             priceList.push(cartProduct.qty * price);
         });
-        return CartHtmlService.sumReducer(priceList);
+        return this.sumReducer(priceList);
     }
 
     updateTotalQtyAndPrice(productsList) {
@@ -184,7 +184,7 @@ class FormHandlerService {
         return validEmail;
     }
 
-    testFormValidity() {
+    static testFormValidity() {
         const firstNameInputHtml = document.getElementById("firstName");
         const validFirstName = FormHandlerService.testNameValidity(firstNameInputHtml);
         const lastNameInputHtml = document.getElementById("lastName");
@@ -204,9 +204,8 @@ class FormHandlerService {
 
 // eslint-disable-next-line no-unused-vars
 class CartPage {
-    constructor( cartHtmlService, formHandlerService, productProvider, router ) {
+    constructor( cartHtmlService, productProvider, router ) {
         this.cartHtmlService = cartHtmlService;
-        this.formHandlerService = formHandlerService;
         this.productProvider = productProvider;
         this.router = router;
     }
@@ -263,7 +262,7 @@ class CartPage {
             qtyInput.addEventListener('change', e => {
                 e.preventDefault();
                 const article = qtyInput.closest("article");
-                CartHtmlService.forceInputMinMaxValue(qtyInput);
+                this.cartHtmlService.forceInputMinMaxValue(qtyInput);
                 LocalstorageService.updateCartProductQty(article.dataset.id, qtyInput.value);
                 this.cartHtmlService.updateTotalQtyAndPrice(productsList);
             })
@@ -297,7 +296,7 @@ class CartPage {
         const orderButton = document.getElementById("order");
         orderButton.addEventListener('click', async (e) => {
             e.preventDefault();
-            const formIsValid = this.formHandlerService.testFormValidity();
+            const formIsValid = FormHandlerService.testFormValidity();
             if (formIsValid) {
                 const contact = {
                     firstName: document.getElementById("firstName").value,
@@ -336,22 +335,5 @@ class CartPage {
         } catch(err) {
             console.log(err);
         }
-    }
-}
-
-
-// eslint-disable-next-line no-unused-vars
-class ConfirmationPage {
-    constructor( router ) {
-        this.router = router
-    }
-
-    renderHtml() {
-        const orderId = this.router.getParamFromUrl("orderId");
-        this.displayOrderId(orderId);
-    }
-
-    displayOrderId(orderId) {
-        document.getElementById("orderId").textContent = orderId;
     }
 }
