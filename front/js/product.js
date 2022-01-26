@@ -119,7 +119,7 @@ class LocalstorageService {
         const updatedCartProduct = CartProduct.createCartProduct({
             qty: newQty,
             color: storedCartProduct.color,
-            id: storedCartProduct.productId
+            id: storedCartProduct.id
         })
         LocalstorageService.saveCartProduct(key, updatedCartProduct);
     }
