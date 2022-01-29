@@ -1,4 +1,4 @@
-class ProductProvider {
+export default class ProductProvider {
     async getAllProducts() {
         try {
             const response = await fetch("http://localhost:3000/api/products");
@@ -12,17 +12,7 @@ class ProductProvider {
         try {
             const res = await fetch(`http://localhost:3000/api/products/${id}`);
             const product = await res.json();
-            return new Product({ 
-                id: product._id,
-                img: {
-                    src: product.imageUrl,
-                    alt: product.altTxt
-                }, 
-                name: product.name,
-                description: product.description,
-                colors: product.colors,
-                price: product.price 
-            });
+            return product;
         } catch(err) {
             console.log(err);
         }
