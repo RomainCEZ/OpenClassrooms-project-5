@@ -61,17 +61,17 @@ class ProductPage {
             id: product._id,
             ...product
         }));
-        this.addToCartClickEventListener(product);
+        this.addToCartClickEventListener(product._id);
     }
 
-    addToCartClickEventListener(product) {
+    addToCartClickEventListener(productId) {
         const saveProductOnClick = e => {
             e.preventDefault();
             try {
                 LocalstorageService.addProductToCart({
                     qty: this.productHtmlService.getQty(),
                     color: this.productHtmlService.getColor(),
-                    id: product.id
+                    id: productId
                 });
                 this.router.goToUrl("./cart.html");
             } catch(error) {
