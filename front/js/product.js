@@ -1,39 +1,8 @@
-class Product {
-    constructor ({ id, img, name, description, colors, price }) {
-        this.id = id,
-        this.img = img,
-        this.name = name,
-        this.description = description,
-        this.colors = colors,
-        this.price = price
-    }
-    static createProduct(product) {
-        return new Product(product);
-    }
-}
+import ProductProvider from "./modules/ProductProvider.js";
+import Product from "./modules/Product.js";
+import LocalstorageService from "./modules/LocalStorageService.js";
+import Router from "./modules/Router.js";
 
-class CartProduct {
-    constructor ({ qty, color, id}) {
-        this.qty = qty,
-        this.color = color,
-        this.id = id
-    }
-    static createCartProduct({ qty, color, id}) {
-        CartProduct.checkParameters(qty, color);
-        return new CartProduct({ qty, color, id});
-    }
-
-    static checkParameters(qty, color) {
-        if ( color === "") {
-            throw new Error("*Veuillez choisir une couleur.*");
-        }
-        if ( qty < 1 || qty > 100 ) {
-            throw new Error("*Veuillez saisir une quantité entre 1 et 100.*");
-        }
-    }
-}
-
-// eslint-disable-next-line no-unused-vars
 class ProductHtmlService {
     constructor (document) {
         this.document = document;
@@ -56,14 +25,8 @@ class ProductHtmlService {
             .textContent = product.price;
         
         const colors = this.document.getElementById("colors");
-        const colorFragment = new DocumentFragment();
-        product.colors.forEach( color => {
-            const colorOption = document.createElement("option");
-            colorOption.value = color;
-            colorOption.textContent = color;
-            colorFragment.appendChild(colorOption);
-        })
-        colors.appendChild(colorFragment);
+        const colorOptions = product.createColorOptionsFragment
+        colors.appendChild(colorOptions);
     }
 
     getColor() {
@@ -83,50 +46,6 @@ class ProductHtmlService {
     }
 }
 
-class LocalstorageService {
-    static getCartProduct(key) {
-        const product = localStorage.getItem(key);
-        return product ? JSON.parse(product) : null;
-    }
-
-    static saveCartProduct(key, cartProduct) {
-        localStorage.setItem(key, JSON.stringify(cartProduct));
-    }
-
-    static removeCartProduct(key) {
-        localStorage.removeItem(key);
-    }
-    
-    static addProductToCart(cartProduct) {
-        const id = cartProduct.id;
-        const color = cartProduct.color;
-        const key = LocalstorageService.getKey(id, color);
-        const storedCartProduct = LocalstorageService.getCartProduct(key);
-        if (storedCartProduct) {
-            LocalstorageService.updateCartProductWithNewQty(key, storedCartProduct, cartProduct.qty);
-        } else {
-            LocalstorageService.saveCartProduct(key, cartProduct);
-        }
-    }
-
-    static getKey(id, color) {
-        return `${id}-${color}`;
-    }
-
-    static updateCartProductWithNewQty(key, storedCartProduct, qtyToAdd) {
-        const storedQty = storedCartProduct.qty;
-        const newQty = Number(storedQty) + Number(qtyToAdd);
-        const updatedCartProduct = CartProduct.createCartProduct({
-            qty: newQty,
-            color: storedCartProduct.color,
-            id: storedCartProduct.id
-        })
-        LocalstorageService.saveCartProduct(key, updatedCartProduct);
-    }
-}
-
-
-
 // eslint-disable-next-line no-unused-vars
 class ProductPage {
     constructor(productHtmlService, productProvider, router) {
@@ -138,7 +57,10 @@ class ProductPage {
     async renderHtml() {
         const productId = this.router.getParamFromUrl("id");
         const product = await this.productProvider.getProductById(productId);
-        this.productHtmlService.addProductIntoPage(product);
+        this.productHtmlService.addProductIntoPage(Product.createProduct({
+            id: product._id,
+            ...product
+        }));
         this.addToCartClickEventListener(product);
     }
 
@@ -146,12 +68,11 @@ class ProductPage {
         const saveProductOnClick = e => {
             e.preventDefault();
             try {
-                const cartProduct = CartProduct.createCartProduct({
+                LocalstorageService.addProductToCart({
                     qty: this.productHtmlService.getQty(),
                     color: this.productHtmlService.getColor(),
                     id: product.id
-                })
-                LocalstorageService.addProductToCart(cartProduct);
+                });
                 this.router.goToUrl("./cart.html");
             } catch(error) {
                 document.getElementById("errorMsg").textContent = error.message;
@@ -161,5 +82,5 @@ class ProductPage {
     }
 }
 
-// const productPage = new ProductPage(new ProductHtmlService(document), new ProductProvider(), new Router())
-// productPage.renderHtml();
+const productPage = new ProductPage(new ProductHtmlService(document), new ProductProvider(), new Router())
+productPage.renderHtml();

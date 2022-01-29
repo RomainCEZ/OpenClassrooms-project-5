@@ -1,4 +1,5 @@
-// eslint-disable-next-line no-unused-vars
+import Router from "./modules/Router.js";
+
 class ConfirmationPage {
     constructor( router ) {
         this.router = router
@@ -13,3 +14,6 @@ class ConfirmationPage {
         document.getElementById("orderId").textContent = orderId;
     }
 }
+
+const confirmationPage = new ConfirmationPage( new Router());
+confirmationPage.renderHtml();
