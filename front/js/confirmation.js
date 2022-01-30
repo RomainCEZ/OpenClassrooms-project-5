@@ -1,19 +1,14 @@
-import Router from "./modules/Router.js";
+import HtmlService from "./modules/HtmlService.js";
 
 class ConfirmationPage {
-    constructor( router ) {
-        this.router = router
+    constructor(htmlService) {
+        this.htmlService = htmlService;
     }
-
-    renderHtml() {
-        const orderId = this.router.getParamFromUrl("orderId");
-        this.displayOrderId(orderId);
-    }
-
-    displayOrderId(orderId) {
-        document.getElementById("orderId").textContent = orderId;
+    renderConfirmationPage() {
+        const orderId = this.htmlService.getParamFromUrl("orderId");
+        this.htmlService.insertTextContent(orderId, "#orderId");
     }
 }
 
-const confirmationPage = new ConfirmationPage( new Router());
-confirmationPage.renderHtml();
+const confirmationPage = new ConfirmationPage(new HtmlService(document));
+confirmationPage.renderConfirmationPage();
