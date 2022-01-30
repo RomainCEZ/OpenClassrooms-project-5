@@ -1,67 +1,47 @@
 import ProductProvider from "./modules/ProductProvider.js";
+import HtmlService from "./modules/HtmlService.js";
 import Product from "./modules/Product.js";
 import LocalstorageService from "./modules/LocalStorageService.js";
 import Router from "./modules/Router.js";
 
-class ProductHtmlService {
-    constructor (document) {
-        this.document = document;
-    }
-    addProductIntoPage(product) {
-        this.document.title = product.name;
-
-        this.document.getElementById("title")
-            .textContent = product.name;
-
-        const img = document.createElement("img");
-        img.src = product.img.src;
-        img.alt = product.img.alt;
-        this.document.querySelector(".item__img").appendChild(img);
-        
-        document.getElementById("description")
-            .textContent = product.description;
-
-        this.document.getElementById("price")
-            .textContent = product.price;
-        
-        const colors = this.document.getElementById("colors");
-        const colorOptions = product.createColorOptionsFragment
-        colors.appendChild(colorOptions);
-    }
-
-    getColor() {
-        const colorsSelect = this.document.getElementById("colors");
-        const colorOption = colorsSelect.options[colorsSelect.selectedIndex];
-        return colorOption.value;
-    }
-    
-    getQty() {
-        const qtyInput = this.document.getElementById("quantity");
-        return Number(qtyInput.value);
-    }
-    
-    setMinQtyToOne() {
-        const qtyInput = this.document.getElementById("quantity");
-        qtyInput.value = 1;
-    }
-}
-
-// eslint-disable-next-line no-unused-vars
 class ProductPage {
-    constructor(productHtmlService, productProvider, router) {
-        this.productHtmlService = productHtmlService;
+    constructor(htmlService, productProvider, router) {
+        this.htmlService = htmlService;
         this.productProvider = productProvider;
         this.router = router;
     }
 
-    async renderHtml() {
-        const productId = this.router.getParamFromUrl("id");
+    get selectedColor() {
+        const colorsSelect = document.getElementById("colors");
+        const colorOption = colorsSelect.options[colorsSelect.selectedIndex];
+        return colorOption.value;
+    }
+
+    get selectedQty() {
+        return document.getElementById("quantity").value
+    }
+
+    async renderProductPage() {
+        const productId = this.htmlService.getParamFromUrl("id");
         const product = await this.productProvider.getProductById(productId);
-        this.productHtmlService.addProductIntoPage(Product.createProduct({
+        this.renderHtmlProduct(Product.createProduct({
             id: product._id,
             ...product
         }));
         this.addToCartClickEventListener(product._id);
+    }
+
+    renderHtmlProduct(product) {
+        document.title = product.name;
+        this.htmlService.insertTextContent(product.name, "#title");
+        const img = document.createElement("img");
+        img.src = product.img.src;
+        img.alt = product.img.alt;
+        this.htmlService.insertHtmlElement(img, ".item__img");
+        this.htmlService.insertTextContent(product.description, "#description");
+        this.htmlService.insertTextContent(product.price, "#price");
+        const colorOptions = product.createColorOptionsFragment
+        this.htmlService.insertHtmlElement(colorOptions, "#colors");
     }
 
     addToCartClickEventListener(productId) {
@@ -69,8 +49,8 @@ class ProductPage {
             e.preventDefault();
             try {
                 LocalstorageService.addProductToCart({
-                    qty: this.productHtmlService.getQty(),
-                    color: this.productHtmlService.getColor(),
+                    qty: this.selectedQty,
+                    color: this.selectedColor,
                     id: productId
                 });
                 this.router.goToUrl("./cart.html");
@@ -82,5 +62,5 @@ class ProductPage {
     }
 }
 
-const productPage = new ProductPage(new ProductHtmlService(document), new ProductProvider(), new Router())
-productPage.renderHtml();
+const productPage = new ProductPage(new HtmlService(document), new ProductProvider(), new Router())
+productPage.renderProductPage();
