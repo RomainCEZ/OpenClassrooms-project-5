@@ -1,27 +1,24 @@
 import ProductProvider from "./modules/ProductProvider.js";
+import HtmlService from "./modules/HtmlService.js";
 import Product from "./modules/Product.js";
 
 class IndexPage {
-    constructor(productProvider, router) {
+    constructor(htmlService, productProvider) {
+        this.htmlService = htmlService;
         this.productProvider = productProvider;
-        this.router = router;
     }
 
-    async renderHtml() {
+    async renderIndexPage() {
         const products = await this.productProvider.getAllProducts();
-        this.insertProductsIntoHtml(products);
+        this.renderHtmlProducts(products);
     }
 
-    insertProductsIntoHtml(products) {
-        const productsList = document.querySelector("#items");
-        const fragment = new DocumentFragment();
-        products.forEach( product => {
-            const productHtml = new Product({ id: product._id, ...product }).createIndexPageHtmlProduct;
-            fragment.appendChild(productHtml);
-        })
-        productsList.appendChild(fragment);
+    renderHtmlProducts(products) {
+        const htmlProductsList = products.map( product => new Product({ id: product._id, ...product }).createIndexPageHtmlProduct)
+        const productsFragment = this.htmlService.createFragment(htmlProductsList)
+        this.htmlService.insertHtmlElement(productsFragment, "#items");
     }
 }
 
-const indexPage = new IndexPage(new ProductProvider());
-indexPage.renderHtml();
+const indexPage = new IndexPage(new HtmlService(document), new ProductProvider());
+indexPage.renderIndexPage();
