@@ -18,7 +18,8 @@ export default class LocalstorageService {
         const key = LocalstorageService.getKey(id, color);
         const storedCartProduct = LocalstorageService.getCartProduct(key);
         if (storedCartProduct) {
-            LocalstorageService.addCartProductQty(key, storedCartProduct, qty);
+            const newQty = Number(storedCartProduct.qty) + Number(qty);
+            LocalstorageService.updateCartProductQty(key, newQty);
         } else {
             const cartProduct = CartProduct.createCartProduct({ qty, color, id })
             LocalstorageService.saveCartProduct(key, cartProduct);
@@ -40,17 +41,6 @@ export default class LocalstorageService {
             qty: newQty,
             color: cartProduct.color,
             id: cartProduct.id
-        })
-        LocalstorageService.saveCartProduct(key, updatedCartProduct);
-    }
-
-    static addCartProductQty(key, storedCartProduct, qtyToAdd) {
-        const storedQty = storedCartProduct.qty;
-        const newQty = Number(storedQty) + Number(qtyToAdd);
-        const updatedCartProduct = CartProduct.createCartProduct({
-            qty: newQty,
-            color: storedCartProduct.color,
-            id: storedCartProduct.id
         })
         LocalstorageService.saveCartProduct(key, updatedCartProduct);
     }
