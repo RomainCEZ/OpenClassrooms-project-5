@@ -14,7 +14,7 @@ class IndexPage {
     }
 
     renderHtmlProducts(products) {
-        const htmlProductsList = products.map( product => new Product({ id: product._id, ...product }).createIndexPageHtmlProduct)
+        const htmlProductsList = products.map( product => Product.createProduct({ id: product._id, ...product }).createIndexPageHtmlProduct)
         const productsFragment = this.htmlService.createFragment(htmlProductsList)
         this.htmlService.insertHtmlElement(productsFragment, "#items");
     }
