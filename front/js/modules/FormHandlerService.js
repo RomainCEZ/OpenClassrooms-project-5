@@ -1,56 +1,44 @@
 export default class FormHandlerService {
-    static testEmailRegEx(string) {
-        return /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/i.test(string);
-    }
-    
-    static testAddressRegEx(string) {
-        return /^[0-9-'\s\p{L}\p{M}]+$/muig.test(string);
-    }
-    
-    static testNameRegEx(string) {
-        return /^[-'\s\p{L}\p{M}]+$/muig.test(string);
+
+    static testRegEx(inputToTestId) {
+        const stringToTest = document.getElementById(inputToTestId).value
+        switch (inputToTestId) {
+            case "firstName": 
+            case "lastName":
+                return /^[-'\s\p{L}\p{M}]+$/muig.test(stringToTest);
+            case "address":
+            case "city":
+                return /^[0-9-'\s\p{L}\p{M}]+$/muig.test(stringToTest);
+            case ("email"):
+                return /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/i.test(stringToTest);
+        }
     }
 
-    static editFormErrorMsg(validInput, formInputHtmlId) {
-        const formInputHtml = document.getElementById(`${formInputHtmlId.id}ErrorMsg`);
-        if (!validInput) {
+    static editFormErrorMsg(inputIsValid, testedInputId) {
+        const formInputHtml = document.getElementById(`${testedInputId}ErrorMsg`);
+        if (!inputIsValid) {
             formInputHtml.textContent = "*Champ invalide.*"
         } else {
             formInputHtml.textContent = ""
         }
     }
 
-    static testNameValidity(formInputHtmlId) {
-        const validName = FormHandlerService.testNameRegEx(formInputHtmlId.value);
-        FormHandlerService.editFormErrorMsg(validName, formInputHtmlId);
-        return validName;
-    }
-    
-    static testAdressValidity(formInputHtmlId) {
-        const validAddress = FormHandlerService.testAddressRegEx(formInputHtmlId.value);
-        FormHandlerService.editFormErrorMsg(validAddress, formInputHtmlId);
-        return validAddress;
-    }
-    
-    static testEmailValidity(formInputHtmlId) {
-        const validEmail = FormHandlerService.testEmailRegEx(formInputHtmlId.value);
-        FormHandlerService.editFormErrorMsg(validEmail, formInputHtmlId);
-        return validEmail;
+    static testInputValidity(inputToTestId) {
+        const inputIsValid = FormHandlerService.testRegEx(inputToTestId);
+        FormHandlerService.editFormErrorMsg(inputIsValid, inputToTestId);
+        return inputIsValid;
     }
 
-    static testFormValidity() {
-        const firstNameInputHtml = document.getElementById("firstName");
-        const validFirstName = FormHandlerService.testNameValidity(firstNameInputHtml);
-        const lastNameInputHtml = document.getElementById("lastName");
-        const validLastName = FormHandlerService.testNameValidity(lastNameInputHtml);
-        const addressInputHtml = document.getElementById("address");
-        const validAddress = FormHandlerService.testAdressValidity(addressInputHtml);
-        const cityInputHtml = document.getElementById("city");
-        const validCity = FormHandlerService.testAdressValidity(cityInputHtml);
-        const emailInputHtml = document.getElementById("email");
-        const validEmail = FormHandlerService.testEmailValidity(emailInputHtml);
-        if (validFirstName && validLastName && validAddress && validCity && validEmail) {
-            return true;
+    static testFormValidity(formInputList) {
+        const validInputList = [];
+        formInputList.forEach( input => {
+            const inputIsValid = FormHandlerService.testInputValidity(input.id);
+            if (inputIsValid) {
+                validInputList.push(this);
+            }
+        })
+        if (validInputList.length === formInputList.length) {
+            return true
         }
     }
 }
